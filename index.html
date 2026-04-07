@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8" />
 <meta name="viewport" content="width=device-width,initial-scale=1" />
-<title>FPV Interference — зрозумілі причини (відновлено)</title>
+<title>FPV Interference — Master Constructor</title>
 <style>
   :root{
     --bg:#fff; --text:#111; --muted:#666;
@@ -11,9 +11,12 @@
     --accent:#0b66c3; --card:#fafafa;
     --select-row:#fff3b0;
     --select-cell-outline: 3px solid rgba(11,102,195,0.9);
+    --border:#ddd;
   }
   body{font-family:Segoe UI,Arial,Helvetica,sans-serif;margin:18px;color:var(--text);background:var(--bg)}
   h1{font-size:20px;margin:0 0 12px 0}
+  
+  /* Верхня панель (Controls) */
   .controls{display:flex;gap:12px;align-items:flex-start;margin-bottom:12px;flex-wrap:wrap}
   .group{background:#fbfbfb;border:1px solid #eee;padding:10px;border-radius:8px;min-width:220px}
   label{display:block;font-size:13px;color:var(--muted);margin-bottom:6px}
@@ -21,13 +24,38 @@
   input[type="number"]{padding:8px;border:1px solid #ccc;border-radius:6px;width:140px;background:#fff}
   .small{font-size:12px;color:var(--muted)}
   .btn{background:var(--accent);color:#fff;border:0;padding:8px 12px;border-radius:6px;cursor:pointer}
-  table.channels{width:100%;border-collapse:collapse;margin-top:12px;border:1px solid #ddd}
-  table.channels thead th{background:#f6f6f6;border:1px solid #ddd;padding:8px;text-align:left;font-size:13px}
-  table.channels td{border:1px solid #ddd;padding:0;margin:0;min-width:64px;height:44px;vertical-align:middle}
+  
+  /* Конструктор таблиць */
+  #tablesContainer { margin-top: 15px; }
+  .collapsible-wrapper { border: 1px solid var(--border); border-radius: 8px; overflow: hidden; margin-bottom: 16px; background: #fff; }
+  .table-trigger { background: #f4f4f4; padding: 10px 12px; cursor: pointer; display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid var(--border); }
+  .table-trigger:hover { background: #ededed; }
+  .title-group { display: flex; align-items: center; gap: 10px; flex-grow: 1; }
+  .table-title { font-weight: bold; font-size: 14px; border-radius: 4px; padding: 2px 6px; border: 1px solid transparent; min-width: 100px; }
+  .table-title:focus { background: #fff; outline: 1px solid var(--accent); cursor: text; }
+  .content-to-collapse { display: block; padding: 0; }
+  .content-to-collapse.hidden { display: none; }
+  
+  /* Кнопки конструктора */
+  .btn-secondary { background: #eee; color: #333; margin: 10px; border: 1px solid #ccc; border-radius: 6px; cursor: pointer; font-size: 12px; padding: 6px 10px;}
+  .add-table-wrapper { display: flex; justify-content: flex-end; padding: 0 5px 20px 0; }
+  .btn-round-add { width: 44px; height: 44px; border-radius: 50%; background: #28a745; color: white; border: none; cursor: pointer; font-size: 24px; font-weight: bold; display: flex; align-items: center; justify-content: center; box-shadow: 0 4px 10px rgba(0,0,0,0.15); transition: 0.2s; }
+  .btn-round-add:hover { transform: scale(1.1); background: #218838; }
+  .btn-danger-table { background: #ffebee; color: #c00; border: 1px solid #ffcdd2; padding: 4px 8px; font-size: 11px; border-radius: 4px; cursor: pointer;}
+  .btn-remove-row { background: transparent; color: #cc0000; border: none; cursor: pointer; font-weight: bold; font-size: 18px; width: 30px; }
+
+  /* Сітка каналів */
+  table.channels{width:100%;border-collapse:collapse;border:none}
+  table.channels thead th{background:#f6f6f6;border:1px solid #ddd;border-top:none;padding:8px;text-align:center;font-size:12px;color:#444}
+  table.channels td{border:1px solid #ddd;padding:0;margin:0;min-width:64px;height:40px;vertical-align:middle;text-align:center}
   table.channels td.safe{background:var(--safe)}
   table.channels td.warn{background:var(--warn);cursor:pointer}
   table.channels td.bad{background:var(--bad);cursor:pointer}
-  table.channels td input{width:100%; height:100%; box-sizing:border-box;padding:8px; border:0; background:transparent; text-align:center;font-size:13px; outline:none;}
+  table.channels td input{width:100%; height:100%; box-sizing:border-box;padding:4px; border:0; background:transparent; text-align:center;font-size:13px; outline:none;}
+  .band-name-cell { background: #fcfcfc; width: 70px; font-weight: bold; }
+  .band-input { font-weight: bold; border: none; background: transparent; width: 50px; text-align: center !important; }
+  
+  /* Звіти та легенда */
   .summary-row-selected{background:var(--select-row) !important}
   .cell-selected{outline:var(--select-cell-outline); outline-offset:-2px}
   .legend{display:flex;gap:12px;margin-top:8px;align-items:center;flex-wrap:wrap}
@@ -36,82 +64,81 @@
   table.results{width:100%;border-collapse:collapse;margin-top:8px}
   table.results th, table.results td{border:1px solid #ddd;padding:6px;font-size:12px;text-align:left}
   th{background:#f4f4f4}
+  
+  /* Модальне вікно */
   .modal-backdrop{position:fixed;inset:0;background:rgba(0,0,0,0.45);display:none;align-items:center;justify-content:center;z-index:9999}
   .modal{background:var(--card);width:min(980px,96%);max-height:86vh;overflow:auto;border-radius:8px;padding:18px;box-shadow:0 8px 30px rgba(0,0,0,0.2)}
   .modal .close{float:right;background:#ddd;color:#111;border-radius:6px;padding:6px 8px;cursor:pointer}
   .muted{color:var(--muted);font-size:12px}
   .reason-short{font-weight:600}
+  
   @media(max-width:900px){ .controls{flex-direction:column} .group{width:100%} }
 </style>
 </head>
 <body>
-<h1>FPV Interference — зрозумілі причини</h1>
+
+<h1>FPV Interference — Master Constructor</h1>
 
 <div class="controls" id="topControls">
   <div class="group" aria-label="Frequencies">
     <label for="h1"><strong>H1</strong> — Наземка TX2 → Relay RX2</label>
-    <div class="field"><input id="h1" type="number" value="915" step="0.001" /><span class="small">MHz</span></div>
+    <div class="field"><input id="h1" type="number" value="915" step="0.001" oninput="analyzeAll()"/><span class="small">MHz</span></div>
 
     <label for="h2" style="margin-top:8px"><strong>H2</strong> — Relay TX1 → Drone RX1</label>
-    <div class="field"><input id="h2" type="number" value="2200" step="0.001" /><span class="small">MHz</span></div>
+    <div class="field"><input id="h2" type="number" value="2200" step="0.001" oninput="analyzeAll()"/><span class="small">MHz</span></div>
 
     <label for="h3" style="margin-top:8px"><strong>H3</strong> — Relay VTX2 / Ground VRX2</label>
-    <div class="field"><input id="h3" type="number" value="1280" step="0.001" /><span class="small">MHz</span></div>
+    <div class="field"><input id="h3" type="number" value="1280" step="0.001" oninput="analyzeAll()"/><span class="small">MHz</span></div>
   </div>
 
   <div class="group" aria-label="Options">
     <label for="tolerance"><strong>Допуск (Tolerance)</strong></label>
-    <div class="field"><input id="tolerance" type="number" value="20" step="0.1" /><span class="small">MHz</span></div>
-    <div class="small" style="margin-top:8px">Інші параметри: гармоніки n=1..8, IM до 3-го порядку (приховані).</div>
+    <div class="field"><input id="tolerance" type="number" value="20" step="0.1" oninput="analyzeAll()"/><span class="small">MHz</span></div>
+    <div class="small" style="margin-top:8px">Гармоніки n=1..8, IM до 3-го порядку.</div>
+    <div style="margin-top:12px"><button id="saveAndCalcBtn" class="btn">Розрахувати</button></div>
   </div>
 
   <div class="group" aria-label="Interference summary" style="min-width:360px;">
     <label style="font-weight:600">Міжджерельні попадання (H1, H2, H3)</label>
     <div style="margin-top:6px">
       <table class="results" id="interConflictsSummary" style="width:100%">
-        <thead><tr><th style="width:50%">Тип</th><th style="width:25%">Продукт (MHz)</th><th style="width:25%">Δ (MHz)</th></tr></thead>
-        <tbody id="interConflictsSummaryBody"><tr><td colspan="3" class="small">Натисніть "Зберегти і розрахувати" для оновлення</td></tr></tbody>
+        <thead><tr><th style="width:50%">Тип</th><th style="width:25%">MHz</th><th style="width:25%">Δ</th></tr></thead>
+        <tbody id="interConflictsSummaryBody"><tr><td colspan="3" class="small">Очікування даних...</td></tr></tbody>
       </table>
     </div>
   </div>
 </div>
 
-<div style="display:flex;gap:8px;align-items:center;margin-bottom:12px">
-  <button id="saveAndCalcBtn" class="btn">Зберегти і розрахувати</button>
+<div class="legend" aria-hidden="false">
+  <div><span class="swatch" style="background:var(--safe)"></span> <span class="small">Без конфліктів</span></div>
+  <div style="margin-left:12px"><span class="swatch" style="background:var(--warn)"></span> <span class="small">Потенційний</span></div>
+  <div style="margin-left:12px"><span class="swatch" style="background:var(--bad)"></span> <span class="small">Конфлікт</span></div>
 </div>
 
-<table class="channels" id="channelsGrid" aria-label="Таблиця H4 (VTX1 канали)">
-  <thead>
-    <tr><th>Діапазон</th><th>CH1</th><th>CH2</th><th>CH3</th><th>CH4</th><th>CH5</th><th>CH6</th><th>CH7</th><th>CH8</th></tr>
-  </thead>
-  <tbody id="channelsGridBody"></tbody>
-</table>
+<div id="tablesContainer"></div>
 
-<div class="legend" aria-hidden="false" style="margin-top:8px">
-  <div><span class="swatch" style="background:var(--safe)"></span> <span class="small">Зелений — без конфліктів</span></div>
-  <div style="margin-left:12px"><span class="swatch" style="background:var(--warn)"></span> <span class="small">Жовтий — потенційний</span></div>
-  <div style="margin-left:12px"><span class="swatch" style="background:var(--bad)"></span> <span class="small">Червоний — конфлікт</span></div>
+<div class="add-table-wrapper">
+  <button class="btn-round-add" onclick="addNewTable()" title="Додати нову таблицю">+</button>
 </div>
 
-<div class="results" style="margin-top:18px">
-  <h3 id="reportHeader">Звіт конфліктів</h3>
+<div class="results">
+  <h3 id="reportHeader" style="cursor:pointer;" title="Натисніть для деталей">Звіт конфліктів ▼</h3>
   <table class="results" id="summaryTable">
     <thead><tr><th>Канал (H4)</th><th>Частота (MHz)</th><th>Статус</th><th>Причина (простими словами)</th><th>Δ (MHz)</th></tr></thead>
     <tbody id="summaryBody"></tbody>
   </table>
 </div>
 
-<!-- Critical modal -->
 <div id="criticalModalBackdrop" class="modal-backdrop">
   <div class="modal" role="dialog" aria-modal="true">
     <button id="criticalModalClose" class="close">Закрити</button>
     <h2>Критичні продукти — деталі</h2>
     <div id="criticalModalBody" style="margin-top:8px">
-      <div id="criticalEmpty" style="padding:12px;color:var(--muted)">Немає останнього аналізу. Натисніть "Зберегти і розрахувати".</div>
+      <div id="criticalEmpty" style="padding:12px;color:var(--muted)">Немає останнього аналізу.</div>
       <div id="criticalContent" style="display:none">
-        <div style="margin-bottom:8px"><strong>H1:</strong> <span id="cH1"></span> MHz &nbsp; <strong>H2:</strong> <span id="cH2"></span> MHz &nbsp; <strong>H3:</strong> <span id="cH3"></span> MHz</div>
+        <div style="margin-bottom:8px"><strong>H1:</strong> <span id="cH1"></span> | <strong>H2:</strong> <span id="cH2"></span> | <strong>H3:</strong> <span id="cH3"></span></div>
         <table style="width:100%;border-collapse:collapse;border:1px solid #ddd">
-          <thead><tr style="background:#f6f6f6"><th style="padding:8px;border:1px solid #ddd">Частота (MHz)</th><th style="padding:8px;border:1px solid #ddd">Δ до H4 (MHz)</th><th style="padding:8px;border:1px solid #ddd">Причина (простими словами)</th><th style="padding:8px;border:1px solid #ddd">Джерело</th></tr></thead>
+          <thead><tr style="background:#f6f6f6"><th style="padding:8px;border:1px solid #ddd">MHz</th><th style="padding:8px;border:1px solid #ddd">Δ</th><th style="padding:8px;border:1px solid #ddd">Причина</th><th style="padding:8px;border:1px solid #ddd">Джерело</th></tr></thead>
           <tbody id="criticalTableBody"></tbody>
         </table>
       </div>
@@ -120,422 +147,269 @@
 </div>
 
 <script>
-/* -------------------------
-   H4 channels matrix
-   ------------------------- */
-const channelsMatrix = [
-  {band:'A', ch:[5865,5845,5825,5805,5785,5765,5745,5725]},
-  {band:'B', ch:[5733,5752,5771,5790,5810,5828,5847,5866]},
-  {band:'E', ch:[5705,5685,5665,5645,5885,5905,5925,5945]},
-  {band:'F', ch:[5740,5760,5780,5800,5820,5840,5860,5880]},
-  {band:'R', ch:[5658,5695,5732,5769,5806,5843,5880,5917]},
-  {band:'L', ch:[5362,5399,5436,5473,5510,5547,5584,5621]},
-  {band:'X', ch:[4990,5020,5050,5080,5110,5140,5170,5200]},
-  {band:'Y', ch:[4870,4900,4930,4960,5226,5252,5278,5304]},
-  {band:'A1', ch:[3800,3820,3840,3860,3880,3900,3920,3940]},
-  {band:'B1', ch:[3960,3980,4000,4020,4040,4060,4080,4100]},
-  {band:'E1', ch:[4120,4140,4160,4180,4200,4220,4240,4260]}
-];
+/* =========================================
+   UI КОНСТРУКТОРА ТАБЛИЦЬ
+   ========================================= */
+let tableCount = 0;
 
-function renderH4Table(){
-  const tbody = document.getElementById('channelsGridBody');
-  tbody.innerHTML = '';
-  channelsMatrix.forEach((row, rIdx)=>{
-    const tr = document.createElement('tr');
-    tr.dataset.idx = rIdx;
-    let html = `<td style="padding:8px"><strong>${row.band}</strong></td>`;
-    for(let i=0;i<8;i++){
-      const val = row.ch[i] ?? '';
-      html += `<td><input data-row="${rIdx}" data-col="${i}" value="${val}" aria-label="${row.band} CH${i+1}" /></td>`;
-    }
-    tr.innerHTML = html;
-    tbody.appendChild(tr);
-  });
+function addNewTable(title = "Нова таблиця", data = []) {
+  tableCount++;
+  const tableId = `table_${tableCount}`;
+  const wrapperId = `wrapper_${tableCount}`;
+  const contentId = `content_${tableCount}`;
+
+  const wrapper = document.createElement('div');
+  wrapper.className = 'collapsible-wrapper';
+  wrapper.id = wrapperId;
+
+  wrapper.innerHTML = `
+    <div class="table-trigger" onclick="toggleTable(event, '${contentId}')">
+      <div class="title-group">
+        <span class="icon">▼</span>
+        <span class="table-title" contenteditable="true" onblur="analyzeAll()" onclick="event.stopPropagation()">${title}</span>
+      </div>
+      <button class="btn-danger-table" onclick="removeTable('${wrapperId}')">Видалити таблицю</button>
+    </div>
+    <div id="${contentId}" class="content-to-collapse">
+      <table class="channels" id="${tableId}">
+        <thead>
+          <tr><th>Band</th><th>CH1</th><th>CH2</th><th>CH3</th><th>CH4</th><th>CH5</th><th>CH6</th><th>CH7</th><th>CH8</th><th style="width:30px"></th></tr>
+        </thead>
+        <tbody></tbody>
+      </table>
+      <button class="btn-secondary" onclick="addRowToTable('${tableId}')">+ Додати ряд</button>
+    </div>
+  `;
+
+  document.getElementById('tablesContainer').appendChild(wrapper);
+
+  if (data.length > 0) {
+    data.forEach(row => addRowToTable(tableId, row.b, row.c));
+  } else {
+    addRowToTable(tableId);
+  }
 }
-renderH4Table();
 
-/* -------------------------
-   Math helpers
-   ------------------------- */
+function addRowToTable(tableId, bandName = 'NEW', frequencies = [0,0,0,0,0,0,0,0]) {
+  const tbody = document.querySelector(`#${tableId} tbody`);
+  const tr = document.createElement('tr');
+  let html = `<td class="band-name-cell"><input class="band-input" value="${bandName}" oninput="analyzeAll()"></td>`;
+  frequencies.forEach(f => {
+    html += `<td><input type="number" class="freq-input" value="${f}" oninput="analyzeAll()"></td>`;
+  });
+  html += `<td><button class="btn-remove-row" onclick="this.parentElement.parentElement.remove(); analyzeAll();">×</button></td>`;
+  tr.innerHTML = html;
+  tbody.appendChild(tr);
+  analyzeAll();
+}
+
+function removeTable(id) {
+  if (confirm("Видалити цю таблицю?")) {
+    document.getElementById(id).remove();
+    analyzeAll();
+  }
+}
+
+function toggleTable(e, contentId) {
+  if (e.target.hasAttribute('contenteditable') || e.target.tagName === 'BUTTON') return;
+  const content = document.getElementById(contentId);
+  const icon = e.currentTarget.querySelector('.icon');
+  const isHidden = content.classList.toggle('hidden');
+  icon.innerText = isHidden ? '▲' : '▼';
+}
+
+/* =========================================
+   ОРИГІНАЛЬНА МАТЕМАТИКА
+   ========================================= */
 function round6(x){ return Math.round(x * 1e6) / 1e6; }
 function harmonic(freq,n){ return freq * n; }
 function subharmonic(freq,n){ return freq / n; }
 function imPlus(m,f1,n,f2){ return Math.abs(m*f1 + n*f2); }
 function imMinus(m,f1,n,f2){ return Math.abs(m*f1 - n*f2); }
 
-/* -------------------------
-   Human-readable reason helpers
-   ------------------------- */
-function humanReasonForTone(id, freq){
-  return `${id}: основна частота ${freq.toFixed(3)} MHz. Це джерело сигналу.`;
-}
-function humanReasonForHarmonic(id, n, freq){
-  return `Гармоніка: ${n}×${id} = ${freq.toFixed(3)} MHz. Це кратна версія основної частоти.`;
-}
-function humanReasonForSubharmonic(id, n, freq){
-  return `Субгармоніка: ${id} / ${n} = ${freq.toFixed(3)} MHz. Це поділ основної частоти.`;
-}
-function humanReasonForIMPlus(m, aId, n, bId, freq){
-  return `Інтермодуляція (сума): ${m}×${aId} + ${n}×${bId} ≈ ${freq.toFixed(3)} MHz. Простими словами: два сигнали змішались і дали цю частоту.`;
-}
-function humanReasonForIMMinus(m, aId, n, bId, freq){
-  return `Інтермодуляція (різниця): ${m}×${aId} − ${n}×${bId} ≈ ${freq.toFixed(3)} MHz. Простими словами: різниця двох частот дала цю частоту.`;
-}
+function humanReasonForTone(id, freq){ return `${id}: основна частота ${freq.toFixed(3)} MHz.`; }
+function humanReasonForHarmonic(id, n, freq){ return `Гармоніка: ${n}×${id} = ${freq.toFixed(3)} MHz.`; }
+function humanReasonForSubharmonic(id, n, freq){ return `Субгармоніка: ${id} / ${n} = ${freq.toFixed(3)} MHz.`; }
+function humanReasonForIMPlus(m, aId, n, bId, freq){ return `IM+: ${m}×${aId} + ${n}×${bId} ≈ ${freq.toFixed(3)} MHz.`; }
+function humanReasonForIMMinus(m, aId, n, bId, freq){ return `IM-: ${m}×${aId} − ${n}×${bId} ≈ ${freq.toFixed(3)} MHz.`; }
 
-/* -------------------------
-   Read H4 from table (flatten)
-   ------------------------- */
-function readH4(){
-  const arr = [];
-  document.querySelectorAll('#channelsGridBody tr').forEach(tr=>{
-    const band = tr.querySelector('strong').textContent;
-    const inputs = tr.querySelectorAll('input');
-    inputs.forEach((inp, idx)=>{
-      const v = parseFloat(inp.value);
-      if(isFinite(v) && v > 0) arr.push({band: band, channel: 'CH'+(idx+1), freq: v, rowIdx: tr.dataset.idx, colIdx: idx});
-    });
-  });
-  return arr;
-}
-
-/* -------------------------
-   Non-invasive pairwise checks (H1,H2,H3)
-   ------------------------- */
 function pushUniqueToSet(set, arr, rec){
   const key = `${rec.type}|${round6(rec.productFreq)}|${rec.target}`;
   if(set.has(key)) return;
   set.add(key);
   arr.push(rec);
 }
+
 function checkHarmonicsSubharmonics(srcId, srcFreq, tgtId, tgtFreq, tolerance, maxH, seenSet, interConflicts){
   if(!isFinite(srcFreq) || !isFinite(tgtFreq) || srcFreq<=0 || tgtFreq<=0) return;
-  for(let n=1;n<=Math.max(1,Math.floor(maxH));n++){
+  for(let n=1;n<=maxH;n++){
     const hf = harmonic(srcFreq,n);
     const delta = Math.abs(hf - tgtFreq);
-    const rec = {
-      type:`${srcId} harmonic hits ${tgtId}`,
-      product:`${srcId}*${n}`,
-      productFreq:hf,
-      productSource:srcId,
-      target:tgtId,
-      targetFreq:tgtFreq,
-      delta:delta,
-      human: humanReasonForHarmonic(srcId, n, hf)
-    };
-    if(delta <= tolerance) pushUniqueToSet(seenSet, interConflicts, rec);
-    else if(delta <= tolerance * 1.5) pushUniqueToSet(seenSet, interConflicts, Object.assign({},rec,{type:`${srcId} harmonic near ${tgtId}`})); 
-  }
-  for(let n=2;n<=Math.max(2,Math.floor(maxH));n++){
-    const sf = subharmonic(srcFreq,n);
-    if(!isFinite(sf) || sf<=0) continue;
-    const delta = Math.abs(sf - tgtFreq);
-    const rec = {
-      type:`${srcId} subharmonic hits ${tgtId}`,
-      product:`${srcId}/${n}`,
-      productFreq:sf,
-      productSource:srcId,
-      target:tgtId,
-      targetFreq:tgtFreq,
-      delta:delta,
-      human: humanReasonForSubharmonic(srcId, n, sf)
-    };
-    if(delta <= tolerance) pushUniqueToSet(seenSet, interConflicts, rec);
-    else if(delta <= tolerance * 1.5) pushUniqueToSet(seenSet, interConflicts, Object.assign({},rec,{type:`${srcId} subharmonic near ${tgtId}`})); 
+    if(delta <= tolerance * 1.5){
+       pushUniqueToSet(seenSet, interConflicts, {type:`${srcId}*${n}`, productFreq:hf, target:tgtId, delta, human: humanReasonForHarmonic(srcId, n, hf)});
+    }
   }
 }
 
-/* -------------------------
-   Main analyzer
-   ------------------------- */
+/* Читання ВСІХ динамічних таблиць */
+function readH4(){
+  const arr = [];
+  document.querySelectorAll('.collapsible-wrapper').forEach(wrapper => {
+    const tableName = wrapper.querySelector('.table-title').innerText;
+    wrapper.querySelectorAll('tbody tr').forEach(tr => {
+      const band = tr.querySelector('.band-input').value;
+      tr.querySelectorAll('.freq-input').forEach((inp, idx) => {
+        const v = parseFloat(inp.value);
+        if(isFinite(v) && v > 0) {
+          arr.push({ table: tableName, band: band, channel: 'CH'+(idx+1), freq: v, inputElement: inp });
+        }
+      });
+    });
+  });
+  return arr;
+}
+
 function analyzeAll(){
-  try {
-    const h1 = parseFloat(document.getElementById('h1').value) || 0;
-    const h2 = parseFloat(document.getElementById('h2').value) || 0;
-    const h3 = parseFloat(document.getElementById('h3').value) || 0;
-    const tolerance = Math.abs(parseFloat(document.getElementById('tolerance').value)) || 20;
+  const h1 = parseFloat(document.getElementById('h1').value) || 0;
+  const h2 = parseFloat(document.getElementById('h2').value) || 0;
+  const h3 = parseFloat(document.getElementById('h3').value) || 0;
+  const tolerance = Math.abs(parseFloat(document.getElementById('tolerance').value)) || 20;
 
-    const maxH = 8;
-    const maxIM = 3;
-    const maxSum = 4;
-    const includeZeroIM = true;
-    const imd3Only = false;
+  const sources = [{id:'H1', freq:h1}, {id:'H2', freq:h2}, {id:'H3', freq:h3}].filter(s => s.freq > 0);
+  const raw = [];
+  
+  sources.forEach(s => {
+    raw.push({freq: s.freq, reason: s.id, type:'tone', human: humanReasonForTone(s.id, s.freq)});
+    for(let n=1; n<=8; n++){
+      raw.push({freq: harmonic(s.freq, n), reason:`${s.id} H${n}`, type:'harmonic', human: humanReasonForHarmonic(s.id, n, harmonic(s.freq, n))});
+      raw.push({freq: subharmonic(s.freq, n), reason:`${s.id} S${n}`, type:'subharmonic', human: humanReasonForSubharmonic(s.id, n, subharmonic(s.freq, n))});
+    }
+  });
 
-    const sources = [
-      {id:'H1', freq:h1},
-      {id:'H2', freq:h2},
-      {id:'H3', freq:h3}
-    ].filter(s => isFinite(s.freq) && s.freq > 0);
-
-    const raw = [];
-    // add tones with human reason
-    sources.forEach(s => raw.push({
-      freq: s.freq,
-      reason: `${s.id} (вхідний тон)`,
-      source: s.id,
-      type:'tone',
-      m:null, n:null,
-      human: humanReasonForTone(s.id, s.freq)
-    }));
-
-    // harmonics & subharmonics
-    sources.forEach(s=>{
-      for(let n=1;n<=maxH;n++){
-        raw.push({
-          freq: harmonic(s.freq, n),
-          reason:`${s.id} гармоніка n=${n}`,
-          source:s.id,
-          type:'harmonic',
-          m:n, n:0,
-          human: humanReasonForHarmonic(s.id, n, harmonic(s.freq,n))
-        });
-        raw.push({
-          freq: subharmonic(s.freq, n),
-          reason:`${s.id} субгармоніка n=${n}`,
-          source:s.id,
-          type:'subharmonic',
-          m:0, n:n,
-          human: humanReasonForSubharmonic(s.id, n, subharmonic(s.freq,n))
-        });
-      }
-    });
-
-    // IM products with human reasons
-    for(let i=0;i<sources.length;i++){
-      for(let j=i+1;j<sources.length;j++){
-        const a = sources[i], b = sources[j];
-        const mStart = includeZeroIM ? 0 : 1;
-        const nStart = includeZeroIM ? 0 : 1;
-        for(let m=mStart;m<=maxIM;m++){
-          for(let n=nStart;n<=maxIM;n++){
-            if(m===0 && n===0) continue;
-            if(m + n > maxSum) continue;
-            if(imd3Only && (m + n) !== 3) continue;
-            const plusFreq = imPlus(m, a.freq, n, b.freq);
-            raw.push({
-              freq: plusFreq,
-              reason:`IM+ ${a.id}(${m}) & ${b.id}(${n})`,
-              source:`${a.id}|${b.id}`,
-              type:'IM+',
-              m:m, n:n,
-              human: humanReasonForIMPlus(m, a.id, n, b.id, plusFreq)
-            });
-            const minusFreq = imMinus(m, a.freq, n, b.freq);
-            raw.push({
-              freq: minusFreq,
-              reason:`IM- ${a.id}(${m}) & ${b.id}(${n})`,
-              source:`${a.id}|${b.id}`,
-              type:'IM-',
-              m:m, n:n,
-              human: humanReasonForIMMinus(m, a.id, n, b.id, minusFreq)
-            });
-          }
+  for(let i=0; i<sources.length; i++){
+    for(let j=i+1; j<sources.length; j++){
+      const a = sources[i], b = sources[j];
+      for(let m=0; m<=3; m++){
+        for(let n=0; n<=3; n++){
+          if(m+n > 4 || (m==0 && n==0)) continue;
+          const pf = imPlus(m, a.freq, n, b.freq);
+          raw.push({freq: pf, reason:`IM+`, human: humanReasonForIMPlus(m, a.id, n, b.id, pf)});
+          const mf = imMinus(m, a.freq, n, b.freq);
+          raw.push({freq: mf, reason:`IM-`, human: humanReasonForIMMinus(m, a.id, n, b.id, mf)});
         }
       }
     }
-
-    // merge near-duplicate products and combine human reasons
-    const uniq = {};
-    raw.forEach(p=>{
-      if(!p || !isFinite(p.freq) || p.freq <= 0) return;
-      const key = round6(p.freq);
-      if(!uniq[key]) uniq[key] = {
-        freq: p.freq,
-        reasons: [p.reason || ''],
-        sources: [p.source || ''],
-        types: [p.type || ''],
-        orders: [{m:p.m, n:p.n}],
-        humans: [p.human || '']
-      };
-      else {
-        if(p.reason && !uniq[key].reasons.includes(p.reason)) uniq[key].reasons.push(p.reason);
-        if(p.source && !uniq[key].sources.includes(p.source)) uniq[key].sources.push(p.source);
-        if(p.type && !uniq[key].types.includes(p.type)) uniq[key].types.push(p.type);
-        uniq[key].orders.push({m:p.m, n:p.n});
-        if(p.human && !uniq[key].humans.includes(p.human)) uniq[key].humans.push(p.human);
-      }
-    });
-    const products = Object.keys(uniq).map(k => ({
-      freq: uniq[k].freq,
-      reason: uniq[k].reasons.join(' ; '),
-      source: uniq[k].sources.join(' ; '),
-      type: uniq[k].types.join(' ; '),
-      orders: uniq[k].orders,
-      human: uniq[k].humans.join(' ; ')
-    }));
-
-    const h4 = readH4();
-    const summaryMap = {};
-    h4.forEach(ch => {
-      const key = `${ch.band}_CH${ch.channel.replace('CH','')}`;
-      summaryMap[key] = {freq: ch.freq, status:'safe', reason:'', delta:null, human:'', band:ch.band, channel:ch.channel};
-    });
-
-    // compare products to H4 channels and store human-readable reason
-    products.forEach(p=>{
-      Object.keys(summaryMap).forEach(key=>{
-        const s = summaryMap[key];
-        const delta = Math.abs(p.freq - s.freq);
-        if(delta <= tolerance){
-          if(s.status !== 'bad' || (s.delta !== null && delta < s.delta)){
-            s.status = 'bad';
-            s.reason = p.reason + (p.type ? ` (${p.type})` : '');
-            s.delta = delta;
-            s.human = p.human || p.reason;
-          }
-        } else if(delta <= tolerance * 1.5){
-          if(s.status === 'safe'){
-            s.status = 'warn';
-            s.reason = p.reason + (p.type ? ` (${p.type})` : '');
-            s.delta = delta;
-            s.human = p.human || p.reason;
-          } else if(s.status === 'warn' && s.delta !== null && delta < s.delta){
-            s.reason = p.reason + (p.type ? ` (${p.type})` : '');
-            s.delta = delta;
-            s.human = p.human || p.reason;
-          }
-        }
-      });
-    });
-
-    // update H4 table coloring and attach freq/human data
-    document.querySelectorAll('#channelsGridBody tr').forEach(tr=>{
-      const band = tr.querySelector('strong').textContent;
-      const inputs = tr.querySelectorAll('input');
-      inputs.forEach((inp, idx)=>{
-        const key = `${band}_CH${idx+1}`;
-        const td = inp.parentElement;
-        td.classList.remove('safe','warn','bad','cell-selected');
-        td.dataset.freq = '';
-        td.dataset.human = '';
-        const info = summaryMap[key];
-        if(!info){ td.style.opacity = 0.6; return; }
-        td.style.opacity = 1;
-        td.dataset.freq = info.freq;
-        td.dataset.human = info.human || '';
-        if(info.status === 'bad') td.classList.add('bad');
-        else if(info.status === 'warn') td.classList.add('warn');
-        else td.classList.add('safe');
-      });
-    });
-
-    // populate summary table with human-readable reasons
-    const sb = document.getElementById('summaryBody');
-    sb.innerHTML = '';
-    const entries = Object.keys(summaryMap).map(k => ({channel:k, ...summaryMap[k]})).filter(e => e.status !== 'safe');
-    if(entries.length === 0){
-      sb.innerHTML = `<tr><td colspan="5" class="small">Конфліктів не знайдено</td></tr>`;
-    } else {
-      entries.sort((a,b)=> (a.delta||9999) - (b.delta||9999));
-      entries.forEach(s=>{
-        const tr = document.createElement('tr');
-        tr.dataset.freq = s.freq;
-        const humanText = s.human ? s.human : s.reason;
-        tr.innerHTML = `<td>${s.channel}</td><td>${s.freq}</td><td>${s.status === 'bad' ? 'BAD' : 'WARN'}</td><td class="reason-short">${escapeHtml(humanText)}</td><td>${s.delta !== null ? s.delta.toFixed(3) : ''}</td>`;
-        sb.appendChild(tr);
-      });
-    }
-
-    // build interConflicts for all pairwise combinations (non-invasive) with human text
-    const interConflicts = [];
-    const seenSet = new Set();
-    checkHarmonicsSubharmonics('H3', h3, 'H2', h2, tolerance, maxH, seenSet, interConflicts);
-    checkHarmonicsSubharmonics('H2', h2, 'H3', h3, tolerance, maxH, seenSet, interConflicts);
-    checkHarmonicsSubharmonics('H1', h1, 'H2', h2, tolerance, maxH, seenSet, interConflicts);
-    checkHarmonicsSubharmonics('H2', h2, 'H1', h1, tolerance, maxH, seenSet, interConflicts);
-    checkHarmonicsSubharmonics('H1', h1, 'H3', h3, tolerance, maxH, seenSet, interConflicts);
-    checkHarmonicsSubharmonics('H3', h3, 'H1', h1, tolerance, maxH, seenSet, interConflicts);
-
-    // populate interConflicts summary (top-right box) using human text when available
-    const sumBody = document.getElementById('interConflictsSummaryBody');
-    sumBody.innerHTML = '';
-    if(interConflicts.length === 0){
-      sumBody.innerHTML = `<tr><td colspan="3" class="small">Міжджерельних попадань не знайдено</td></tr>`;
-    } else {
-      interConflicts.sort((a,b)=> (a.delta||9999) - (b.delta||9999));
-      const showList = interConflicts.slice(0,8);
-      showList.forEach(c=>{
-        const tr = document.createElement('tr');
-        const freqText = c.productFreq !== undefined ? (c.productFreq.toFixed ? c.productFreq.toFixed(3) : c.productFreq) : '';
-        const deltaText = c.delta !== undefined ? (c.delta.toFixed ? c.delta.toFixed(3) : c.delta) : '';
-        const human = c.human ? c.human : c.type;
-        tr.innerHTML = `<td class="small">${escapeHtml(human)}</td><td class="small">${freqText}</td><td class="small">${deltaText}</td>`;
-        sumBody.appendChild(tr);
-      });
-      if(interConflicts.length > 8){
-        const tr = document.createElement('tr');
-        tr.innerHTML = `<td colspan="3" class="small">Інші: ${interConflicts.length - 8} приховано</td>`;
-        sumBody.appendChild(tr);
-      }
-    }
-
-    // prepare critical modal content (products that hit H4) using human text
-    const tableBody = document.getElementById('criticalTableBody');
-    tableBody.innerHTML = '';
-    const tol = tolerance;
-    const hits = [];
-    products.forEach(p=>{
-      h4.forEach(ch=>{
-        const delta = Math.abs(p.freq - ch.freq);
-        if(delta <= tol * 1.5){
-          hits.push({freq:p.freq, delta, reason:p.reason, source:p.source, channel:ch.band + ' ' + ch.channel, type: p.type || '', orders: p.orders || [], human: p.human || p.reason});
-        }
-      });
-    });
-    const uniqHits = {};
-    hits.forEach(h=>{
-      const k = `${round6(h.freq)}/${h.channel}`;
-      if(!uniqHits[k]) uniqHits[k] = h;
-      else if(h.delta < uniqHits[k].delta) uniqHits[k] = h;
-    });
-    const list = Object.values(uniqHits).sort((a,b)=>a.delta - b.delta);
-    if(list.length === 0){
-      tableBody.innerHTML = `<tr><td colspan="4" style="padding:10px;color:var(--muted)">Критичних продуктів не знайдено (за останнім аналізом).</td></tr>`;
-      document.getElementById('criticalEmpty').style.display = 'block';
-      document.getElementById('criticalContent').style.display = 'none';
-    } else {
-      document.getElementById('criticalEmpty').style.display = 'none';
-      document.getElementById('criticalContent').style.display = 'block';
-      list.forEach(item=>{
-        const tr = document.createElement('tr');
-        tr.innerHTML = `<td style="padding:8px;border:1px solid #ddd">${item.freq.toFixed(3)}</td>
-                        <td style="padding:8px;border:1px solid #ddd">${item.delta.toFixed(3)}</td>
-                        <td style="padding:8px;border:1px solid #ddd">${escapeHtml(item.human)}</td>
-                        <td style="padding:8px;border:1px solid #ddd">${item.channel}</td>`;
-        tableBody.appendChild(tr);
-      });
-      document.getElementById('cH1').textContent = h1 || '-';
-      document.getElementById('cH2').textContent = h2 || '-';
-      document.getElementById('cH3').textContent = h3 || '-';
-    }
-
-    // attach click handlers to colored cells (red/yellow)
-    attachCellClickHandlers();
-
-    window._lastAnalysis = {H1:h1,H2:h2,H3:h3,tolerance,maxH,products,summaryMap,interConflicts};
-    return;
-  } catch(err){
-    console.error('analyzeAll error', err);
-    alert('Помилка аналізу — див. консоль (F12).');
   }
+
+  const h4 = readH4();
+  const summaryMap = {};
+  
+  // Очищаємо класи комірок
+  document.querySelectorAll('.freq-input').forEach(inp => {
+    const td = inp.parentElement;
+    td.className = '';
+    td.style.opacity = 1;
+  });
+
+  h4.forEach((ch, index) => {
+    const key = `ch_${index}`;
+    summaryMap[key] = {freq: ch.freq, status:'safe', delta:null, human:'', pInfo:null, label: `${ch.table} | ${ch.band} ${ch.channel}`, element: ch.inputElement};
+  });
+
+  raw.forEach(p => {
+    Object.keys(summaryMap).forEach(key => {
+      const s = summaryMap[key];
+      const delta = Math.abs(p.freq - s.freq);
+      if(delta <= tolerance * 1.5){
+        if(s.status === 'safe' || (s.delta !== null && delta < s.delta)){
+          s.status = delta <= tolerance ? 'bad' : 'warn';
+          s.delta = delta;
+          s.human = p.human;
+          s.pInfo = p;
+        }
+      }
+    });
+  });
+
+  const summaryBody = document.getElementById('summaryBody');
+  summaryBody.innerHTML = '';
+  
+  Object.values(summaryMap).forEach(s => {
+    const td = s.element.parentElement;
+    td.dataset.freq = s.freq;
+    if(s.status === 'bad') td.classList.add('bad');
+    else if(s.status === 'warn') td.classList.add('warn');
+    else td.classList.add('safe');
+
+    if(s.status !== 'safe'){
+      const tr = document.createElement('tr');
+      tr.dataset.freq = s.freq;
+      tr.innerHTML = `<td>${s.label}</td><td>${s.freq}</td><td>${s.status === 'bad' ? 'BAD' : 'WARN'}</td><td class="reason-short">${s.human}</td><td>${s.delta.toFixed(3)}</td>`;
+      summaryBody.appendChild(tr);
+    }
+  });
+
+  if(summaryBody.innerHTML === '') summaryBody.innerHTML = '<tr><td colspan="5" class="small">Конфліктів не знайдено</td></tr>';
+
+  // ОРИГІНАЛЬНІ МІЖДЖЕРЕЛЬНІ КОНФЛІКТИ
+  const interBody = document.getElementById('interConflictsSummaryBody');
+  interBody.innerHTML = '';
+  const interConflicts = [];
+  const seenSet = new Set();
+  
+  if(h1 && h2) checkHarmonicsSubharmonics('H1', h1, 'H2', h2, tolerance, 8, seenSet, interConflicts);
+  if(h2 && h3) checkHarmonicsSubharmonics('H2', h2, 'H3', h3, tolerance, 8, seenSet, interConflicts);
+  if(h1 && h3) checkHarmonicsSubharmonics('H1', h1, 'H3', h3, tolerance, 8, seenSet, interConflicts);
+  // Reverse checks
+  if(h2 && h1) checkHarmonicsSubharmonics('H2', h2, 'H1', h1, tolerance, 8, seenSet, interConflicts);
+  if(h3 && h2) checkHarmonicsSubharmonics('H3', h3, 'H2', h2, tolerance, 8, seenSet, interConflicts);
+  if(h3 && h1) checkHarmonicsSubharmonics('H3', h3, 'H1', h1, tolerance, 8, seenSet, interConflicts);
+  
+  if(interConflicts.length === 0){
+    interBody.innerHTML = '<tr><td colspan="3" class="small">Конфліктів H1/H2/H3 не знайдено</td></tr>';
+  } else {
+    interConflicts.sort((a,b)=> a.delta - b.delta);
+    interConflicts.forEach(c => {
+      interBody.innerHTML += `<tr><td class="small">${c.human}</td><td class="small">${c.productFreq.toFixed(1)}</td><td class="small">${c.delta.toFixed(1)}</td></tr>`;
+    });
+  }
+
+  // ОРИГІНАЛЬНА МОДАЛКА
+  const modalBody = document.getElementById('criticalTableBody');
+  modalBody.innerHTML = '';
+  const criticals = Object.values(summaryMap).filter(s => s.status !== 'safe');
+  
+  if(criticals.length === 0){
+    document.getElementById('criticalEmpty').style.display = 'block';
+    document.getElementById('criticalContent').style.display = 'none';
+  } else {
+    document.getElementById('criticalEmpty').style.display = 'none';
+    document.getElementById('criticalContent').style.display = 'block';
+    document.getElementById('cH1').textContent = h1;
+    document.getElementById('cH2').textContent = h2;
+    document.getElementById('cH3').textContent = h3;
+    
+    criticals.sort((a,b)=> a.delta - b.delta).forEach(s => {
+      modalBody.innerHTML += `<tr><td style="padding:8px;border:1px solid #ddd">${s.pInfo.freq.toFixed(3)}</td><td style="padding:8px;border:1px solid #ddd">${s.delta.toFixed(3)}</td><td style="padding:8px;border:1px solid #ddd">${s.human}</td><td style="padding:8px;border:1px solid #ddd">${s.label}</td></tr>`;
+    });
+  }
+
+  attachCellClickHandlers();
 }
 
 /* -------------------------
-   Click handlers for cells (точний матч спочатку)
+   Кліки по комірках для виділення рядка
    ------------------------- */
 function clearSummarySelection(){
   document.querySelectorAll('#summaryBody tr').forEach(r => r.classList.remove('summary-row-selected'));
 }
 function clearCellSelection(){
-  document.querySelectorAll('#channelsGridBody td').forEach(td => td.classList.remove('cell-selected'));
+  document.querySelectorAll('.freq-input').forEach(inp => inp.parentElement.classList.remove('cell-selected'));
 }
 function attachCellClickHandlers(){
-  document.querySelectorAll('#channelsGridBody td').forEach(td=>{
+  document.querySelectorAll('.freq-input').forEach(inp=>{
+    const td = inp.parentElement;
     td.onclick = null;
-  });
-
-  const tolerance = Math.abs(parseFloat(document.getElementById('tolerance').value)) || 20;
-
-  document.querySelectorAll('#channelsGridBody td').forEach(td=>{
     if(!td.classList.contains('warn') && !td.classList.contains('bad')) return;
 
     td.onclick = function(e){
@@ -545,97 +419,55 @@ function attachCellClickHandlers(){
       if(already) return;
 
       td.classList.add('cell-selected');
-      const inp = td.querySelector('input');
-      if(!inp) return;
       const freq = parseFloat(inp.value);
       if(!isFinite(freq)) return;
 
       const rows = Array.from(document.querySelectorAll('#summaryBody tr'));
-      const matches = [];
-
-      // 1) exact match (practically zero tolerance)
-      rows.forEach(r=>{
-        const rowFreqText = r.dataset.freq || (r.cells && r.cells[1] ? r.cells[1].textContent : '');
-        const rowFreq = parseFloat(rowFreqText);
-        if(!isFinite(rowFreq)) return;
-        const delta = Math.abs(rowFreq - freq);
-        if(delta <= 1e-6) matches.push({row:r, delta});
-      });
-
-      // 2) narrow window (5% of tolerance, min 0.001 MHz)
-      if(matches.length === 0){
-        const narrow = Math.max(0.001, tolerance * 0.05);
-        rows.forEach(r=>{
-          const rowFreqText = r.dataset.freq || (r.cells && r.cells[1] ? r.cells[1].textContent : '');
-          const rowFreq = parseFloat(rowFreqText);
-          if(!isFinite(rowFreq)) return;
-          const delta = Math.abs(rowFreq - freq);
-          if(delta <= narrow) matches.push({row:r, delta});
-        });
+      let targetRow = null;
+      
+      for(let r of rows){
+        const rFreq = parseFloat(r.dataset.freq);
+        if(Math.abs(rFreq - freq) < 0.001){ targetRow = r; break; }
       }
 
-      // 3) fallback: tolerance * 1.0
-      if(matches.length === 0){
-        rows.forEach(r=>{
-          const rowFreqText = r.dataset.freq || (r.cells && r.cells[1] ? r.cells[1].textContent : '');
-          const rowFreq = parseFloat(rowFreqText);
-          if(!isFinite(rowFreq)) return;
-          const delta = Math.abs(rowFreq - freq);
-          if(delta <= Math.max(1e-6, tolerance * 1.0)) matches.push({row:r, delta});
-        });
+      if(targetRow){
+        targetRow.classList.add('summary-row-selected');
+        targetRow.scrollIntoView({behavior:'smooth', block:'center'});
       }
-
-      if(matches.length === 0) return;
-
-      matches.sort((a,b)=>a.delta - b.delta);
-      matches.forEach(m => m.row.classList.add('summary-row-selected'));
-      const first = matches[0].row;
-      first.scrollIntoView({behavior:'smooth', block:'center'});
     };
   });
 }
 
-/* -------------------------
-   Utility: escape HTML for safe insertion
-   ------------------------- */
-function escapeHtml(str){
-  if(!str && str !== 0) return '';
-  return String(str)
-    .replace(/&/g, '&amp;')
-    .replace(/</g, '&lt;')
-    .replace(/>/g, '&gt;')
-    .replace(/"/g, '&quot;')
-    .replace(/'/g, '&#039;');
-}
+// Modal wiring
+const modal = document.getElementById('criticalModalBackdrop');
+document.getElementById('reportHeader').onclick = () => { analyzeAll(); modal.style.display = 'flex'; };
+document.getElementById('criticalModalClose').onclick = () => modal.style.display = 'none';
+window.onclick = (e) => { if(e.target === modal) modal.style.display = 'none'; };
 
-/* -------------------------
-   Modal and header wiring
-   ------------------------- */
-(function(){
-  const modal = document.getElementById('criticalModalBackdrop');
-  const closeBtn = document.getElementById('criticalModalClose');
+document.getElementById('saveAndCalcBtn').onclick = analyzeAll;
 
-  const header = document.getElementById('reportHeader');
-  if(header){
-    header.style.cursor = 'pointer';
-    header.title = 'Натисніть, щоб відкрити деталі конфліктів';
-    header.addEventListener('click', function () {
-      analyzeAll();
-      modal.style.display = 'flex';
-    });
-  }
+/* ІНІЦІАЛІЗАЦІЯ ДАНИХ */
+const initial58 = [
+  {b:'A', c:[5865,5845,5825,5805,5785,5765,5745,5725]},
+  {b:'B', c:[5733,5752,5771,5790,5810,5828,5847,5866]},
+  {b:'E', c:[5705,5685,5665,5645,5885,5905,5925,5945]},
+  {b:'F', c:[5740,5760,5780,5800,5820,5840,5860,5880]},
+  {b:'R', c:[5658,5695,5732,5769,5806,5843,5880,5917]},
+  {b:'L', c:[5362,5399,5436,5473,5510,5547,5584,5621]},
+  {b:'X', c:[4990,5020,5050,5080,5110,5140,5170,5200]},
+  {b:'Y', c:[4870,4900,4930,4960,5226,5252,5278,5304]}
+];
+const initial40 = [
+  {b:'A1', c:[3800,3820,3840,3860,3880,3900,3920,3940]},
+  {b:'B1', c:[3960,3980,4000,4020,4040,4060,4080,4100]},
+  {b:'E1', c:[4120,4140,4160,4180,4200,4220,4240,4260]}
+];
 
-  closeBtn.addEventListener('click', function(){ modal.style.display='none'; });
-  modal.addEventListener('click', function(e){ if(e.target === modal) modal.style.display='none'; });
-})();
-
-/* -------------------------
-   UI wiring
-   ------------------------- */
-document.getElementById('saveAndCalcBtn').addEventListener('click', function(){
-  analyzeAll();
-});
-window.addEventListener('load', function(){ setTimeout(analyzeAll, 80); });
+window.onload = () => {
+  addNewTable("Таблиця 1 — 5.8 GHz", initial58);
+  addNewTable("Таблиця 2 — 4.0 GHz", initial40);
+  setTimeout(analyzeAll, 300);
+};
 </script>
 </body>
 </html>
