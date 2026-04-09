@@ -3,152 +3,267 @@
 <head>
 <meta charset="utf-8" />
 <meta name="viewport" content="width=device-width,initial-scale=1" />
-<title>FPV Interference — Master Constructor</title>
+<title>FPV Interference — Master Constructor PRO</title>
 <style>
   :root{
-    --bg:#fff; --text:#111; --muted:#666;
-    --safe:#dff7df; --warn:#fff4d6; --bad:#ffd6d6;
-    --accent:#0b66c3; --card:#fafafa;
-    --select-row:#fff3b0;
-    --select-cell-outline: 3px solid rgba(11,102,195,0.9);
-    --border:#ddd;
+    --bg:#f4f7f6; --text:#2c3e50; --muted:#7f8c8d;
+    --safe:#d4efdf; 
+    --warn:#fcf3cf; --bad:#fadbd8;
+    --accent:#2980b9; --card:#ffffff;
+    --select-row:#fdebd0; 
+    --select-cell-outline: 3px solid rgba(41,128,185,0.9);
+    --border:#bdc3c7;
   }
-  body{font-family:Segoe UI,Arial,Helvetica,sans-serif;margin:18px;color:var(--text);background:var(--bg)}
-  h1{font-size:20px;margin:0 0 12px 0}
+  body{font-family:'Segoe UI',Roboto,Helvetica,sans-serif;margin:20px;color:var(--text);background:var(--bg)}
+  h1{font-size:24px;margin:0 0 16px 0; color:#2c3e50; font-weight: 800;}
   
-  /* Верхня панель (Controls) */
-  .controls{display:flex;gap:12px;align-items:flex-start;margin-bottom:12px;flex-wrap:wrap}
-  .group{background:#fbfbfb;border:1px solid #eee;padding:10px;border-radius:8px;min-width:220px}
-  label{display:block;font-size:13px;color:var(--muted);margin-bottom:6px}
+  /* Верхня панель */
+  .controls{display:flex;gap:16px;align-items:flex-start;margin-bottom:20px;flex-wrap:wrap}
+  .group{background:var(--card);border:1px solid #e0e6ed;padding:16px;border-radius:12px;min-width:280px; flex:1; box-shadow: 0 4px 6px rgba(0,0,0,0.02);}
+  .group h3 {margin: 0 0 12px 0; font-size: 16px; border-bottom: 2px solid var(--accent); padding-bottom: 6px; display:inline-block;}
+  label{display:block;font-size:13px;color:var(--muted);margin-bottom:4px; font-weight:600;}
   .field{display:flex;gap:8px;align-items:center}
-  input[type="number"]{padding:8px;border:1px solid #ccc;border-radius:6px;width:140px;background:#fff}
+  input[type="number"], input[type="text"]{padding:8px 12px;border:1px solid #ccc;border-radius:6px;background:#fff; font-family:inherit;}
   .small{font-size:12px;color:var(--muted)}
-  .btn{background:var(--accent);color:#fff;border:0;padding:8px 12px;border-radius:6px;cursor:pointer}
+  .btn{background:var(--accent);color:#fff;border:0;padding:10px 16px;border-radius:8px;cursor:pointer; font-weight:bold; transition: 0.2s;}
+  .btn:hover{background:#2471a3;}
   
-  /* Конструктор таблиць */
-  #tablesContainer { margin-top: 15px; }
-  .collapsible-wrapper { border: 1px solid var(--border); border-radius: 8px; overflow: hidden; margin-bottom: 16px; background: #fff; }
-  .table-trigger { background: #f4f4f4; padding: 10px 12px; cursor: pointer; display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid var(--border); }
-  .table-trigger:hover { background: #ededed; }
+  /* Конструктор джерел (Drag & Drop) */
+  .source-row { display:flex; gap:8px; align-items:center; margin-bottom:10px; background:#fff; padding:8px; border:1px solid #ddd; border-radius:8px; box-shadow: 0 2px 4px rgba(0,0,0,0.05); transition: transform 0.1s;}
+  .source-row.dragging { opacity: 0.5; border: 2px dashed var(--accent); }
+  .drag-handle { cursor: grab; color: #aaa; font-size: 18px; padding: 0 5px; user-select: none; }
+  .drag-handle:active { cursor: grabbing; }
+  .source-name { width: 150px; font-weight: 600;}
+  .source-freq { width: 90px; font-weight:bold; color:var(--accent);}
+  .btn-remove-source { background: #fee; color: #e74c3c; border: none; border-radius:6px; cursor: pointer; padding:8px 12px; font-weight:bold; transition:0.2s;}
+  .btn-remove-source:hover { background: #fcd; }
+  .btn-add-source { background:#ebf5fb; color:var(--accent); border:2px dashed #a9cce3; padding:10px; border-radius:8px; cursor:pointer; width:100%; text-align:center; font-weight:bold; box-sizing:border-box;}
+  .btn-add-source:hover { background:#d4e6f1; }
+
+  /* Налаштування чекбоксів */
+  .checkbox-group { display: flex; gap: 16px; flex-wrap: wrap; background: #ebf5fb; padding: 10px 12px; border-radius: 8px; border: 1px solid #d6eaf8; margin-bottom: 16px; }
+  .checkbox-label { display: flex; align-items: center; gap: 6px; font-size: 13px; font-weight: bold; color: #2980b9; cursor: pointer; margin: 0; }
+  .checkbox-label input { cursor: pointer; width: 16px; height: 16px; margin: 0; }
+
+  /* Таблиці та Згортання */
+  .collapsible-wrapper { border: 1px solid var(--border); border-radius: 10px; overflow: hidden; margin-bottom: 16px; background: #fff; box-shadow: 0 2px 8px rgba(0,0,0,0.04);}
+  .table-trigger { background: #f8f9f9; padding: 12px 16px; cursor: pointer; display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid var(--border); }
   .title-group { display: flex; align-items: center; gap: 10px; flex-grow: 1; }
-  .table-title { font-weight: bold; font-size: 14px; border-radius: 4px; padding: 2px 6px; border: 1px solid transparent; min-width: 100px; }
-  .table-title:focus { background: #fff; outline: 1px solid var(--accent); cursor: text; }
-  .content-to-collapse { display: block; padding: 0; }
-  .content-to-collapse.hidden { display: none; }
+  .table-title { font-weight: bold; font-size: 15px; border-radius: 4px; padding: 2px 6px; border: 1px solid transparent; }
+  .table-title:focus { background: #fff; outline: 2px solid var(--accent); cursor: text; }
+  .btn-danger-table { background: transparent; color: #e74c3c; border: 1px solid #e74c3c; padding: 4px 10px; font-size: 12px; border-radius: 6px; cursor: pointer;}
+  .btn-danger-table:hover { background: #fee; }
   
-  /* Кнопки конструктора */
-  .btn-secondary { background: #eee; color: #333; margin: 10px; border: 1px solid #ccc; border-radius: 6px; cursor: pointer; font-size: 12px; padding: 6px 10px;}
-  .add-table-wrapper { display: flex; justify-content: flex-end; padding: 0 5px 20px 0; }
-  .btn-round-add { width: 44px; height: 44px; border-radius: 50%; background: #28a745; color: white; border: none; cursor: pointer; font-size: 24px; font-weight: bold; display: flex; align-items: center; justify-content: center; box-shadow: 0 4px 10px rgba(0,0,0,0.15); transition: 0.2s; }
-  .btn-round-add:hover { transform: scale(1.1); background: #218838; }
-  .btn-danger-table { background: #ffebee; color: #c00; border: 1px solid #ffcdd2; padding: 4px 8px; font-size: 11px; border-radius: 4px; cursor: pointer;}
-  .btn-remove-row { background: transparent; color: #cc0000; border: none; cursor: pointer; font-weight: bold; font-size: 18px; width: 30px; }
+  .content-to-collapse { display: block; padding: 0; }
+  .btn-secondary { background: #ecf0f1; color: #2c3e50; margin: 12px; border: 1px solid #bdc3c7; border-radius: 6px; cursor: pointer; font-size: 13px; padding: 8px 12px; font-weight:bold;}
+  .btn-secondary:hover { background: #bdc3c7; }
+  .btn-remove-row { background: transparent; color: #e74c3c; border: none; cursor: pointer; font-weight: bold; font-size: 18px; width: 30px; }
 
   /* Сітка каналів */
-  table.channels{width:100%;border-collapse:collapse;border:none}
-  table.channels thead th{background:#f6f6f6;border:1px solid #ddd;border-top:none;padding:8px;text-align:center;font-size:12px;color:#444}
-  table.channels td{border:1px solid #ddd;padding:0;margin:0;min-width:64px;height:40px;vertical-align:middle;text-align:center}
+  table.channels{width:100%;border-collapse:collapse;}
+  table.channels th{background:#ecf0f1;border:1px solid #ddd;padding:10px;font-size:12px;color:#34495e}
+  table.channels td{border:1px solid #ddd;padding:0;min-width:64px;height:44px;vertical-align:middle;text-align:center; transition: 0.2s;}
+  
   table.channels td.safe{background:var(--safe)}
   table.channels td.warn{background:var(--warn);cursor:pointer}
   table.channels td.bad{background:var(--bad);cursor:pointer}
-  table.channels td input{width:100%; height:100%; box-sizing:border-box;padding:4px; border:0; background:transparent; text-align:center;font-size:13px; outline:none;}
-  .band-name-cell { background: #fcfcfc; width: 70px; font-weight: bold; }
-  .band-input { font-weight: bold; border: none; background: transparent; width: 50px; text-align: center !important; }
+  table.channels td.cell-selected { outline: var(--select-cell-outline); outline-offset: -2px; z-index: 10; position: relative; }
   
-  /* Звіти та легенда */
-  .summary-row-selected{background:var(--select-row) !important}
-  .cell-selected{outline:var(--select-cell-outline); outline-offset:-2px}
-  .legend{display:flex;gap:12px;margin-top:8px;align-items:center;flex-wrap:wrap}
-  .swatch{width:18px;height:14px;border:1px solid #ccc;display:inline-block}
-  .results{margin-top:16px}
-  table.results{width:100%;border-collapse:collapse;margin-top:8px}
-  table.results th, table.results td{border:1px solid #ddd;padding:6px;font-size:12px;text-align:left}
-  th{background:#f4f4f4}
+  table.channels td input{width:100%; height:100%; box-sizing:border-box;padding:4px; border:0; background:transparent; text-align:center;font-size:14px; font-weight:600; outline:none; cursor:inherit;}
+  .band-name-cell { background: #fcfcfc !important; }
+  .band-input { font-weight: 800; border: none; background: transparent; width: 50px; text-align: center !important; border-bottom: 1px dashed #ccc; cursor:text;}
+
+  /* Звіти */
+  .results{margin-top:16px; margin-bottom: 30px;}
+  table.results{width:100%;border-collapse:collapse; background:#fff;}
+  table.results th, table.results td{border:1px solid #eee;padding:12px;font-size:14px;text-align:left; transition: background 0.3s; vertical-align: top;}
+  table.results th{background:#34495e; color:#fff; font-weight:600;}
   
-  /* Модальне вікно */
-  .modal-backdrop{position:fixed;inset:0;background:rgba(0,0,0,0.45);display:none;align-items:center;justify-content:center;z-index:9999}
-  .modal{background:var(--card);width:min(980px,96%);max-height:86vh;overflow:auto;border-radius:8px;padding:18px;box-shadow:0 8px 30px rgba(0,0,0,0.2)}
-  .modal .close{float:right;background:#ddd;color:#111;border-radius:6px;padding:6px 8px;cursor:pointer}
-  .muted{color:var(--muted);font-size:12px}
-  .reason-short{font-weight:600}
+  .summary-row-selected { background: var(--select-row) !important; outline: 2px solid #e67e22; outline-offset: -1px; }
+
+  .badge { display:inline-block; padding:4px 10px; border-radius:12px; font-size:12px; font-weight:bold; margin-bottom:6px;}
+  .badge.harm { background:#e74c3c; color:white; }
+  .badge.imd { background:#f39c12; color:white; }
+  .badge.fund { background:#8e44ad; color:white; } 
   
-  @media(max-width:900px){ .controls{flex-direction:column} .group{width:100%} }
+  .legend{display:flex;gap:16px;margin:12px 0; padding:10px; background:#fff; border-radius:8px; border:1px solid #eee;}
+  .swatch{width:20px;height:20px;border-radius:4px; border:1px solid #ccc;display:inline-block; vertical-align:middle;}
+  
+  .tech-font { font-family: 'Courier New', Courier, monospace; font-size: 13px; font-weight: bold; color: #2980b9;}
+
+  /* Стиль для обгортки звіту */
+  .report-wrapper { border: 2px solid var(--accent); box-shadow: 0 4px 12px rgba(41,128,185,0.15); margin-bottom: 40px;}
+  .report-trigger { background: #ebf5fb; }
 </style>
 </head>
 <body>
 
-<h1>FPV Interference — Master Constructor</h1>
+<h1>📡 FPV Аналізатор Частот</h1>
 
-<div class="controls" id="topControls">
-  <div class="group" aria-label="Frequencies">
-    <label for="h1"><strong>H1</strong> — Наземка TX2 → Relay RX2</label>
-    <div class="field"><input id="h1" type="number" value="915" step="0.001" oninput="analyzeAll()"/><span class="small">MHz</span></div>
-
-    <label for="h2" style="margin-top:8px"><strong>H2</strong> — Relay TX1 → Drone RX1</label>
-    <div class="field"><input id="h2" type="number" value="2200" step="0.001" oninput="analyzeAll()"/><span class="small">MHz</span></div>
-
-    <label for="h3" style="margin-top:8px"><strong>H3</strong> — Relay VTX2 / Ground VRX2</label>
-    <div class="field"><input id="h3" type="number" value="1280" step="0.001" oninput="analyzeAll()"/><span class="small">MHz</span></div>
+<div class="controls">
+  <div class="group" style="flex: 1.5;">
+    <h3>1. Обладнання </h3>
+    <div class="small" style="margin-bottom:12px;">Впишіть сюди пульти, відеопередавачі, GPS (все, що працює поруч). <b>Можна тягати за ☰</b></div>
+    <div id="sourcesContainer"></div>
+    <div class="btn-add-source" onclick="addSourceRow('', '')">+ Додати пристрій</div>
   </div>
 
-  <div class="group" aria-label="Options">
-    <label for="tolerance"><strong>Допуск (Tolerance)</strong></label>
-    <div class="field"><input id="tolerance" type="number" value="20" step="0.1" oninput="analyzeAll()"/><span class="small">MHz</span></div>
-    <div class="small" style="margin-top:8px">Гармоніки n=1..8, IM до 3-го порядку.</div>
-    <div style="margin-top:12px"><button id="saveAndCalcBtn" class="btn">Розрахувати</button></div>
-  </div>
+  <div class="group" style="flex: 2;">
+    
+    <div class="checkbox-group">
+      <div class="small" style="width:100%; color:#555; margin-bottom:4px; font-weight:normal;">Що перевіряти?</div>
+      <label class="checkbox-label">
+        <input type="checkbox" id="optHarmonics" checked onchange="analyzeAll()"> Гармоніки
+      </label>
+      <label class="checkbox-label">
+        <input type="checkbox" id="optSubharmonics" checked onchange="analyzeAll()"> Субгармоніки
+      </label>
+      <label class="checkbox-label">
+        <input type="checkbox" id="optIMD" checked onchange="analyzeAll()"> Інтермодуляція (IMD)
+      </label>
+    </div>
 
-  <div class="group" aria-label="Interference summary" style="min-width:360px;">
-    <label style="font-weight:600">Міжджерельні попадання (H1, H2, H3)</label>
-    <div style="margin-top:6px">
-      <table class="results" id="interConflictsSummary" style="width:100%">
-        <thead><tr><th style="width:50%">Тип</th><th style="width:25%">MHz</th><th style="width:25%">Δ</th></tr></thead>
-        <tbody id="interConflictsSummaryBody"><tr><td colspan="3" class="small">Очікування даних...</td></tr></tbody>
+    <div style="display:flex; justify-content:space-between; align-items:flex-end; margin-bottom:16px; background:#f4f7f6; padding:12px; border-radius:8px;">
+      <div>
+        <label>Допуск (Радіус небезпеки)</label>
+        <div class="field"><input id="tolerance" type="number" value="25" step="1" oninput="analyzeAll()"/><span class="small">МГц</span></div>
+        <div class="small" style="margin-top:4px;">Відстань завади до каналу.</div>
+      </div>
+      <button class="btn" onclick="analyzeAll()">⚡ Розрахувати</button>
+    </div>
+
+    <h3 style="color:#c00;">⚠️ Самозаглушення (Внутрішні конфлікти обладнання)</h3>
+    <div style="max-height: 250px; overflow-y: auto;">
+      <table class="results" id="interConflictsSummary" style="margin-top:0; border-radius: 8px; overflow: hidden; box-shadow: 0 2px 5px rgba(0,0,0,0.05);">
+        <thead><tr><th style="width:50%">Причина завади</th><th style="width:30%">Жертва</th><th style="width:20%">Δ (МГц)</th></tr></thead>
+        <tbody id="interConflictsSummaryBody"><tr><td colspan="3" class="small">Натисніть "Розрахувати"</td></tr></tbody>
       </table>
     </div>
   </div>
 </div>
 
-<div class="legend" aria-hidden="false">
-  <div><span class="swatch" style="background:var(--safe)"></span> <span class="small">Без конфліктів</span></div>
-  <div style="margin-left:12px"><span class="swatch" style="background:var(--warn)"></span> <span class="small">Потенційний</span></div>
-  <div style="margin-left:12px"><span class="swatch" style="background:var(--bad)"></span> <span class="small">Конфлікт</span></div>
+<div class="legend">
+  <div><span class="swatch" style="background:var(--safe)"></span> <span class="small" style="font-weight:bold; margin-left:5px;">ЗЕЛЕНИЙ: Можна летіти</span></div>
+  <div><span class="swatch" style="background:var(--warn)"></span> <span class="small" style="font-weight:bold; margin-left:5px;">ЖОВТИЙ: Може сніжити далеко</span></div>
+  <div><span class="swatch" style="background:var(--bad)"></span> <span class="small" style="font-weight:bold; margin-left:5px; color:#c00;">ЧЕРВОНИЙ: Впаде або зникне відео!</span></div>
 </div>
+
+<div class="small" style="margin-bottom:12px; color:#555;">💡 <b>Підказка:</b> Натисніть на червону або жовту клітинку в таблиці нижче, щоб швидко знайти її у звіті. Всі зміни зберігаються автоматично.</div>
 
 <div id="tablesContainer"></div>
 
-<div class="add-table-wrapper">
-  <button class="btn-round-add" onclick="addNewTable()" title="Додати нову таблицю">+</button>
+<div style="display: flex; justify-content: flex-end; margin-bottom: 20px;">
+  <button class="btn" style="background: #27ae60;" onclick="addNewTable('Нова кастомна таблиця', [])">+ Додати нову таблицю відео</button>
 </div>
 
-<div class="results">
-  <h3 id="reportHeader" style="cursor:pointer;" title="Натисніть для деталей">Звіт конфліктів ▼</h3>
-  <table class="results" id="summaryTable">
-    <thead><tr><th>Канал (H4)</th><th>Частота (MHz)</th><th>Статус</th><th>Причина (простими словами)</th><th>Δ (MHz)</th></tr></thead>
-    <tbody id="summaryBody"></tbody>
-  </table>
-</div>
-
-<div id="criticalModalBackdrop" class="modal-backdrop">
-  <div class="modal" role="dialog" aria-modal="true">
-    <button id="criticalModalClose" class="close">Закрити</button>
-    <h2>Критичні продукти — деталі</h2>
-    <div id="criticalModalBody" style="margin-top:8px">
-      <div id="criticalEmpty" style="padding:12px;color:var(--muted)">Немає останнього аналізу.</div>
-      <div id="criticalContent" style="display:none">
-        <div style="margin-bottom:8px"><strong>H1:</strong> <span id="cH1"></span> | <strong>H2:</strong> <span id="cH2"></span> | <strong>H3:</strong> <span id="cH3"></span></div>
-        <table style="width:100%;border-collapse:collapse;border:1px solid #ddd">
-          <thead><tr style="background:#f6f6f6"><th style="padding:8px;border:1px solid #ddd">MHz</th><th style="padding:8px;border:1px solid #ddd">Δ</th><th style="padding:8px;border:1px solid #ddd">Причина</th><th style="padding:8px;border:1px solid #ddd">Джерело</th></tr></thead>
-          <tbody id="criticalTableBody"></tbody>
-        </table>
-      </div>
+<div class="collapsible-wrapper report-wrapper">
+  <div class="table-trigger report-trigger" onclick="toggleTable(event, 'content_main_report')">
+    <div class="title-group">
+      <span class="table-title" style="font-size: 16px; color: var(--accent);">📋 Головний звіт</span>
     </div>
+  </div>
+  <div id="content_main_report" class="content-to-collapse">
+    <table class="results" id="summaryTable" style="margin-top: 0; border: none;">
+      <thead><tr>
+        <th style="width: 15%;">Канал</th>
+        <th style="width: 10%;">МГц</th>
+        <th style="width: 15%;">Статус</th>
+        <th style="width: 35%;">Причина (Простою мовою)</th>
+        <th style="width: 25%;">Точні розрахунки (Інженерні дані)</th>
+      </tr></thead>
+      <tbody id="summaryBody"></tbody>
+    </table>
   </div>
 </div>
 
 <script>
+let isInitializing = true; 
+
 /* =========================================
-   UI КОНСТРУКТОРА ТАБЛИЦЬ
+   LOCAL STORAGE (ЗБЕРЕЖЕННЯ ДАНИХ)
+   ========================================= */
+function saveState() {
+  if (isInitializing) return; 
+  
+  const state = {
+    sources: readSources(),
+    tolerance: document.getElementById('tolerance').value,
+    optHarmonics: document.getElementById('optHarmonics').checked,
+    optSubharmonics: document.getElementById('optSubharmonics').checked,
+    optIMD: document.getElementById('optIMD').checked,
+    tables: []
+  };
+  
+  document.querySelectorAll('.collapsible-wrapper').forEach(wrapper => {
+    if(wrapper.classList.contains('report-wrapper')) return;
+    
+    const title = wrapper.querySelector('.table-title').innerText;
+    const tableData = [];
+    wrapper.querySelectorAll('tbody tr').forEach(tr => {
+      const b = tr.querySelector('.band-input').value;
+      const c = [];
+      tr.querySelectorAll('.freq-input').forEach(inp => c.push(parseFloat(inp.value) || 0));
+      tableData.push({b: b, c: c});
+    });
+    state.tables.push({title: title, data: tableData});
+  });
+
+  localStorage.setItem('fpvMasterConstructorData', JSON.stringify(state));
+}
+
+/* =========================================
+   ЛОГІКА DRAG & DROP ТА ДЖЕРЕЛ
+   ========================================= */
+let draggedItem = null;
+
+function addSourceRow(name = '', freq = '') {
+  const container = document.getElementById('sourcesContainer');
+  const div = document.createElement('div');
+  div.className = 'source-row';
+  div.draggable = true; 
+  
+  div.innerHTML = `
+    <span class="drag-handle" title="Потягніть, щоб перемістити">☰</span>
+    <input type="text" class="source-name" value="${name}" placeholder="Назва (напр. Пульт)" oninput="analyzeAll()">
+    <input type="number" class="source-freq" value="${freq}" placeholder="MHz" step="1" oninput="analyzeAll()">
+    <button class="btn-remove-source" onclick="this.parentElement.remove(); analyzeAll();" title="Видалити">×</button>
+  `;
+  
+  div.addEventListener('dragstart', function() {
+    draggedItem = this;
+    setTimeout(() => this.classList.add('dragging'), 0);
+  });
+  div.addEventListener('dragend', function() {
+    this.classList.remove('dragging');
+    draggedItem = null;
+    analyzeAll();
+  });
+  div.addEventListener('dragover', function(e) { e.preventDefault(); });
+  div.addEventListener('drop', function(e) {
+    e.preventDefault();
+    if (this !== draggedItem) {
+      const allRows = Array.from(container.querySelectorAll('.source-row'));
+      if (allRows.indexOf(draggedItem) < allRows.indexOf(this)) { this.after(draggedItem); } 
+      else { this.before(draggedItem); }
+    }
+  });
+
+  container.appendChild(div);
+  if(!isInitializing) analyzeAll();
+}
+
+function readSources() {
+  const arr = [];
+  document.querySelectorAll('.source-row').forEach(row => {
+    const name = row.querySelector('.source-name').value.trim() || 'Без назви';
+    const freq = parseFloat(row.querySelector('.source-freq').value);
+    if(isFinite(freq) && freq > 0) arr.push({ id: name, freq: freq });
+  });
+  return arr;
+}
+
+/* =========================================
+   UI ТАБЛИЦЬ (Редактор)
    ========================================= */
 let tableCount = 0;
 
@@ -164,273 +279,273 @@ function addNewTable(title = "Нова таблиця", data = []) {
 
   wrapper.innerHTML = `
     <div class="table-trigger" onclick="toggleTable(event, '${contentId}')">
-      <div class="title-group">
-        <span class="icon">▼</span>
-        <span class="table-title" contenteditable="true" onblur="analyzeAll()" onclick="event.stopPropagation()">${title}</span>
-      </div>
+      <div class="title-group"><span class="table-title" contenteditable="true" onblur="analyzeAll()" onclick="event.stopPropagation()">${title}</span></div>
       <button class="btn-danger-table" onclick="removeTable('${wrapperId}')">Видалити таблицю</button>
     </div>
     <div id="${contentId}" class="content-to-collapse">
       <table class="channels" id="${tableId}">
-        <thead>
-          <tr><th>Band</th><th>CH1</th><th>CH2</th><th>CH3</th><th>CH4</th><th>CH5</th><th>CH6</th><th>CH7</th><th>CH8</th><th style="width:30px"></th></tr>
-        </thead>
+        <thead><tr><th>Band</th><th>CH1</th><th>CH2</th><th>CH3</th><th>CH4</th><th>CH5</th><th>CH6</th><th>CH7</th><th>CH8</th><th style="width:30px"></th></tr></thead>
         <tbody></tbody>
       </table>
-      <button class="btn-secondary" onclick="addRowToTable('${tableId}')">+ Додати ряд</button>
+      <button class="btn-secondary" onclick="addRowToTable('${tableId}', 'NEW', [0,0,0,0,0,0,0,0])">+ Додати діапазон</button>
     </div>
   `;
-
   document.getElementById('tablesContainer').appendChild(wrapper);
-
+  
   if (data.length > 0) {
     data.forEach(row => addRowToTable(tableId, row.b, row.c));
   } else {
-    addRowToTable(tableId);
+    addRowToTable(tableId, 'NEW', [0,0,0,0,0,0,0,0]);
   }
 }
 
-function addRowToTable(tableId, bandName = 'NEW', frequencies = [0,0,0,0,0,0,0,0]) {
+function addRowToTable(tableId, bandName, frequencies) {
   const tbody = document.querySelector(`#${tableId} tbody`);
   const tr = document.createElement('tr');
   let html = `<td class="band-name-cell"><input class="band-input" value="${bandName}" oninput="analyzeAll()"></td>`;
-  frequencies.forEach(f => {
-    html += `<td><input type="number" class="freq-input" value="${f}" oninput="analyzeAll()"></td>`;
-  });
-  html += `<td><button class="btn-remove-row" onclick="this.parentElement.parentElement.remove(); analyzeAll();">×</button></td>`;
+  frequencies.forEach(f => html += `<td><input type="number" class="freq-input" value="${f}" oninput="analyzeAll()"></td>`);
+  html += `<td><button class="btn-remove-row" onclick="this.parentElement.parentElement.remove(); analyzeAll();" title="Видалити рядок">×</button></td>`;
   tr.innerHTML = html;
   tbody.appendChild(tr);
-  analyzeAll();
+  if(!isInitializing) analyzeAll();
 }
 
 function removeTable(id) {
-  if (confirm("Видалити цю таблицю?")) {
-    document.getElementById(id).remove();
-    analyzeAll();
-  }
+  if (confirm("Точно видалити цю таблицю?")) { document.getElementById(id).remove(); analyzeAll(); }
 }
 
 function toggleTable(e, contentId) {
-  if (e.target.hasAttribute('contenteditable') || e.target.tagName === 'BUTTON') return;
+  if (e.target.tagName === 'INPUT' || e.target.tagName === 'BUTTON' || e.target.hasAttribute('contenteditable')) return;
   const content = document.getElementById(contentId);
-  const icon = e.currentTarget.querySelector('.icon');
-  const isHidden = content.classList.toggle('hidden');
-  icon.innerText = isHidden ? '▲' : '▼';
+  content.style.display = content.style.display === 'none' ? 'block' : 'none';
 }
 
-/* =========================================
-   ОРИГІНАЛЬНА МАТЕМАТИКА
-   ========================================= */
-function round6(x){ return Math.round(x * 1e6) / 1e6; }
-function harmonic(freq,n){ return freq * n; }
-function subharmonic(freq,n){ return freq / n; }
-function imPlus(m,f1,n,f2){ return Math.abs(m*f1 + n*f2); }
-function imMinus(m,f1,n,f2){ return Math.abs(m*f1 - n*f2); }
-
-function humanReasonForTone(id, freq){ return `${id}: основна частота ${freq.toFixed(3)} MHz.`; }
-function humanReasonForHarmonic(id, n, freq){ return `Гармоніка: ${n}×${id} = ${freq.toFixed(3)} MHz.`; }
-function humanReasonForSubharmonic(id, n, freq){ return `Субгармоніка: ${id} / ${n} = ${freq.toFixed(3)} MHz.`; }
-function humanReasonForIMPlus(m, aId, n, bId, freq){ return `IM+: ${m}×${aId} + ${n}×${bId} ≈ ${freq.toFixed(3)} MHz.`; }
-function humanReasonForIMMinus(m, aId, n, bId, freq){ return `IM-: ${m}×${aId} − ${n}×${bId} ≈ ${freq.toFixed(3)} MHz.`; }
-
-function pushUniqueToSet(set, arr, rec){
-  const key = `${rec.type}|${round6(rec.productFreq)}|${rec.target}`;
-  if(set.has(key)) return;
-  set.add(key);
-  arr.push(rec);
-}
-
-function checkHarmonicsSubharmonics(srcId, srcFreq, tgtId, tgtFreq, tolerance, maxH, seenSet, interConflicts){
-  if(!isFinite(srcFreq) || !isFinite(tgtFreq) || srcFreq<=0 || tgtFreq<=0) return;
-  for(let n=1;n<=maxH;n++){
-    const hf = harmonic(srcFreq,n);
-    const delta = Math.abs(hf - tgtFreq);
-    if(delta <= tolerance * 1.5){
-       pushUniqueToSet(seenSet, interConflicts, {type:`${srcId}*${n}`, productFreq:hf, target:tgtId, delta, human: humanReasonForHarmonic(srcId, n, hf)});
-    }
-  }
-}
-
-/* Читання ВСІХ динамічних таблиць */
-function readH4(){
+function readVideoGrid(){
   const arr = [];
   document.querySelectorAll('.collapsible-wrapper').forEach(wrapper => {
+    if(wrapper.classList.contains('report-wrapper')) return;
     const tableName = wrapper.querySelector('.table-title').innerText;
     wrapper.querySelectorAll('tbody tr').forEach(tr => {
       const band = tr.querySelector('.band-input').value;
       tr.querySelectorAll('.freq-input').forEach((inp, idx) => {
         const v = parseFloat(inp.value);
-        if(isFinite(v) && v > 0) {
-          arr.push({ table: tableName, band: band, channel: 'CH'+(idx+1), freq: v, inputElement: inp });
-        }
+        if(isFinite(v) && v > 0) arr.push({ table: tableName, band: band, channel: 'CH'+(idx+1), freq: v, element: inp });
       });
     });
   });
   return arr;
 }
 
+/* =========================================
+   МАТЕМАТИКА ТА ФОРМУВАННЯ ЗВІТІВ
+   ========================================= */
 function analyzeAll(){
-  const h1 = parseFloat(document.getElementById('h1').value) || 0;
-  const h2 = parseFloat(document.getElementById('h2').value) || 0;
-  const h3 = parseFloat(document.getElementById('h3').value) || 0;
-  const tolerance = Math.abs(parseFloat(document.getElementById('tolerance').value)) || 20;
+  if(isInitializing) return;
 
-  const sources = [{id:'H1', freq:h1}, {id:'H2', freq:h2}, {id:'H3', freq:h3}].filter(s => s.freq > 0);
-  const raw = [];
-  
+  const tolerance = Math.abs(parseFloat(document.getElementById('tolerance').value)) || 25;
+  const sources = readSources();
+  const rawSpikes = []; 
+
+  const doHarm = document.getElementById('optHarmonics').checked;
+  const doSub  = document.getElementById('optSubharmonics').checked;
+  const doIMD  = document.getElementById('optIMD').checked;
+
+  // 1. РАХУЄМО ГАРМОНІКИ ТА ОСНОВНУ ЧАСТОТУ
   sources.forEach(s => {
-    raw.push({freq: s.freq, reason: s.id, type:'tone', human: humanReasonForTone(s.id, s.freq)});
-    for(let n=1; n<=8; n++){
-      raw.push({freq: harmonic(s.freq, n), reason:`${s.id} H${n}`, type:'harmonic', human: humanReasonForHarmonic(s.id, n, harmonic(s.freq, n))});
-      raw.push({freq: subharmonic(s.freq, n), reason:`${s.id} S${n}`, type:'subharmonic', human: humanReasonForSubharmonic(s.id, n, subharmonic(s.freq, n))});
+    rawSpikes.push({
+      freq: s.freq * 1, 
+      weight: 1, 
+      sources: [s.id], 
+      badge: '<span class="badge fund">ОСНОВНА ЧАСТОТА</span>',
+      human: `Антена <b>[${s.id}]</b> випромінює напряму.`,
+      tech: `F1 = ${s.freq} МГц (${s.id})`
+    });
+
+    if (doHarm) {
+      for(let n=2; n<=8; n++){ 
+        rawSpikes.push({
+          freq: s.freq * n, 
+          weight: 1, 
+          sources: [s.id], 
+          badge: '<span class="badge harm">ГАРМОНІКА</span>',
+          human: `Відлуння від антени <b>[${s.id}]</b>.`,
+          tech: `Гармоніка H${n}: ${n} × ${s.freq} МГц (${s.id})`
+        });
+      }
+    }
+
+    if (doSub) {
+      for(let n=2; n<=8; n++){ 
+        rawSpikes.push({
+          freq: s.freq / n, 
+          weight: 2, 
+          sources: [s.id],
+          badge: '<span class="badge harm">СУБГАРМОНІКА</span>',
+          human: `Сміття від <b>[${s.id}]</b> летить у цю низьку частоту.`,
+          tech: `Субгармоніка S${n}: ${s.freq} / ${n} МГц (${s.id})`
+        });
+      }
     }
   });
 
-  for(let i=0; i<sources.length; i++){
-    for(let j=i+1; j<sources.length; j++){
-      const a = sources[i], b = sources[j];
-      for(let m=0; m<=3; m++){
-        for(let n=0; n<=3; n++){
-          if(m+n > 4 || (m==0 && n==0)) continue;
-          const pf = imPlus(m, a.freq, n, b.freq);
-          raw.push({freq: pf, reason:`IM+`, human: humanReasonForIMPlus(m, a.id, n, b.id, pf)});
-          const mf = imMinus(m, a.freq, n, b.freq);
-          raw.push({freq: mf, reason:`IM-`, human: humanReasonForIMMinus(m, a.id, n, b.id, mf)});
+  // 2. РАХУЄМО ІНТЕРМОДУЛЯЦІЮ
+  if (doIMD) {
+    for(let i=0; i<sources.length; i++){
+      for(let j=i+1; j<sources.length; j++){
+        const a = sources[i], b = sources[j];
+        for(let m=1; m<=3; m++){
+          for(let n=1; n<=3; n++){
+            if(m+n > 4) continue; 
+            
+            let p1 = Math.abs(m*a.freq + n*b.freq);
+            let p2 = Math.abs(m*a.freq - n*b.freq);
+            let p3 = Math.abs(n*b.freq - m*a.freq);
+
+            const pushIMD = (f, formulaText) => {
+              rawSpikes.push({
+                freq: f, 
+                weight: 5, 
+                sources: [a.id, b.id], 
+                badge: '<span class="badge imd">ФАНТОМ (IMD)</span>',
+                human: `Антени <b>[${a.id}]</b> та <b>[${b.id}]</b> змішалися і створили шум.`,
+                tech: `IMD: |${formulaText}| = ${f.toFixed(1)} МГц`
+              });
+            };
+
+            pushIMD(p1, `${m}×[${a.id}] + ${n}×[${b.id}]`);
+            pushIMD(p2, `${m}×[${a.id}] - ${n}×[${b.id}]`);
+            pushIMD(p3, `${n}×[${b.id}] - ${m}×[${a.id}]`);
+          }
         }
       }
     }
   }
 
-  const h4 = readH4();
-  const summaryMap = {};
+  // 3. ПЕРЕВІРКА САМОЗАГЛУШЕННЯ
+  const interBody = document.getElementById('interConflictsSummaryBody');
+  interBody.innerHTML = '';
+  let internalCount = 0;
   
-  // Очищаємо класи комірок
-  document.querySelectorAll('.freq-input').forEach(inp => {
-    const td = inp.parentElement;
-    td.className = '';
-    td.style.opacity = 1;
-  });
+  sources.forEach(target => {
+    let bestSpike = null;
+    let minDelta = Infinity;
 
-  h4.forEach((ch, index) => {
-    const key = `ch_${index}`;
-    summaryMap[key] = {freq: ch.freq, status:'safe', delta:null, human:'', pInfo:null, label: `${ch.table} | ${ch.band} ${ch.channel}`, element: ch.inputElement};
-  });
-
-  raw.forEach(p => {
-    Object.keys(summaryMap).forEach(key => {
-      const s = summaryMap[key];
-      const delta = Math.abs(p.freq - s.freq);
-      if(delta <= tolerance * 1.5){
-        if(s.status === 'safe' || (s.delta !== null && delta < s.delta)){
-          s.status = delta <= tolerance ? 'bad' : 'warn';
-          s.delta = delta;
-          s.human = p.human;
-          s.pInfo = p;
-        }
+    rawSpikes.forEach(spike => {
+      if(spike.sources.includes(target.id)) return; 
+      
+      const delta = Math.abs(spike.freq - target.freq);
+      if(delta <= tolerance && delta < minDelta) {
+        minDelta = delta;
+        bestSpike = spike;
       }
     });
+
+    if(bestSpike){
+      internalCount++;
+      const isCritical = minDelta <= (tolerance/2);
+      const rowColor = isCritical ? '#fadbd8' : '#fcf3cf';
+      
+      interBody.innerHTML += `<tr style="background:${rowColor}">
+        <td>
+          ${bestSpike.badge}<br>
+          ${bestSpike.human}<br>
+          <span class="tech-font">${bestSpike.tech}</span>
+        </td>
+        <td><b style="color:#c00;">Глушить ваш [${target.id}]</b></td>
+        <td style="font-weight:bold;">${minDelta.toFixed(2)}</td>
+      </tr>`;
+    }
   });
+  
+  if(internalCount === 0) interBody.innerHTML = '<tr><td colspan="3" style="color:#27ae60; font-weight:bold; font-size:15px; padding:20px; text-align:center;">✅ Ваше обладнання працює дружно і не глушить саме себе.</td></tr>';
+
+  // 4. ПЕРЕВІРКА СІТКИ ВІДЕОКАНАЛІВ
+  const videoGrid = readVideoGrid();
+  document.querySelectorAll('.freq-input').forEach(inp => { inp.parentElement.className = ''; });
 
   const summaryBody = document.getElementById('summaryBody');
   summaryBody.innerHTML = '';
-  
-  Object.values(summaryMap).forEach(s => {
-    const td = s.element.parentElement;
-    td.dataset.freq = s.freq;
-    if(s.status === 'bad') td.classList.add('bad');
-    else if(s.status === 'warn') td.classList.add('warn');
-    else td.classList.add('safe');
+  let videoIssues = 0;
 
-    if(s.status !== 'safe'){
-      const tr = document.createElement('tr');
-      tr.dataset.freq = s.freq;
-      tr.innerHTML = `<td>${s.label}</td><td>${s.freq}</td><td>${s.status === 'bad' ? 'BAD' : 'WARN'}</td><td class="reason-short">${s.human}</td><td>${s.delta.toFixed(3)}</td>`;
-      summaryBody.appendChild(tr);
+  videoGrid.forEach(ch => {
+    let hits = [];
+    rawSpikes.forEach(spike => {
+      const delta = Math.abs(spike.freq - ch.freq);
+      if(delta <= tolerance * 1.5) {
+        hits.push({ ...spike, delta: delta });
+      }
+    });
+
+    let status = 'safe'; 
+
+    if(hits.length > 0) {
+      hits.sort((a, b) => {
+        if (a.weight !== b.weight) return a.weight - b.weight;
+        return a.delta - b.delta;
+      });
+
+      const worst = hits[0]; 
+      if(worst.delta <= tolerance) status = 'bad';
+      else if(worst.delta <= tolerance * 1.5) status = 'warn';
+
+      if(status !== 'safe'){
+        videoIssues++;
+        const isBad = status === 'bad';
+        const color = isBad ? '#fadbd8' : '#fcf3cf';
+        const emoji = isBad ? '❌ КРИТИЧНО' : '⚠️ РИЗИК';
+
+        summaryBody.innerHTML += `<tr style="background:${color}" data-freq="${ch.freq}">
+          <td><b style="font-size:16px;">${ch.band} ${ch.channel}</b><br><span style="font-size:11px; color:#555;">${ch.table}</span></td>
+          <td><b>${ch.freq}</b></td>
+          <td><b style="color:${isBad ? '#c00' : '#b9770e'};">${emoji}</b></td>
+          <td>${worst.badge}<br><b>${worst.human}</b></td>
+          <td>
+            <span class="tech-font">${worst.tech}</span><br>
+            <b style="color:${isBad ? '#c00' : '#b9770e'}; font-size:13px;">Точність: Δ ${worst.delta.toFixed(2)} МГц</b>
+          </td>
+        </tr>`;
+      }
+    }
+
+    if (!ch.element.parentElement.classList.contains('band-name-cell')) {
+       ch.element.parentElement.classList.add(status);
     }
   });
 
-  if(summaryBody.innerHTML === '') summaryBody.innerHTML = '<tr><td colspan="5" class="small">Конфліктів не знайдено</td></tr>';
-
-  // ОРИГІНАЛЬНІ МІЖДЖЕРЕЛЬНІ КОНФЛІКТИ
-  const interBody = document.getElementById('interConflictsSummaryBody');
-  interBody.innerHTML = '';
-  const interConflicts = [];
-  const seenSet = new Set();
-  
-  if(h1 && h2) checkHarmonicsSubharmonics('H1', h1, 'H2', h2, tolerance, 8, seenSet, interConflicts);
-  if(h2 && h3) checkHarmonicsSubharmonics('H2', h2, 'H3', h3, tolerance, 8, seenSet, interConflicts);
-  if(h1 && h3) checkHarmonicsSubharmonics('H1', h1, 'H3', h3, tolerance, 8, seenSet, interConflicts);
-  // Reverse checks
-  if(h2 && h1) checkHarmonicsSubharmonics('H2', h2, 'H1', h1, tolerance, 8, seenSet, interConflicts);
-  if(h3 && h2) checkHarmonicsSubharmonics('H3', h3, 'H2', h2, tolerance, 8, seenSet, interConflicts);
-  if(h3 && h1) checkHarmonicsSubharmonics('H3', h3, 'H1', h1, tolerance, 8, seenSet, interConflicts);
-  
-  if(interConflicts.length === 0){
-    interBody.innerHTML = '<tr><td colspan="3" class="small">Конфліктів H1/H2/H3 не знайдено</td></tr>';
-  } else {
-    interConflicts.sort((a,b)=> a.delta - b.delta);
-    interConflicts.forEach(c => {
-      interBody.innerHTML += `<tr><td class="small">${c.human}</td><td class="small">${c.productFreq.toFixed(1)}</td><td class="small">${c.delta.toFixed(1)}</td></tr>`;
-    });
-  }
-
-  // ОРИГІНАЛЬНА МОДАЛКА
-  const modalBody = document.getElementById('criticalTableBody');
-  modalBody.innerHTML = '';
-  const criticals = Object.values(summaryMap).filter(s => s.status !== 'safe');
-  
-  if(criticals.length === 0){
-    document.getElementById('criticalEmpty').style.display = 'block';
-    document.getElementById('criticalContent').style.display = 'none';
-  } else {
-    document.getElementById('criticalEmpty').style.display = 'none';
-    document.getElementById('criticalContent').style.display = 'block';
-    document.getElementById('cH1').textContent = h1;
-    document.getElementById('cH2').textContent = h2;
-    document.getElementById('cH3').textContent = h3;
-    
-    criticals.sort((a,b)=> a.delta - b.delta).forEach(s => {
-      modalBody.innerHTML += `<tr><td style="padding:8px;border:1px solid #ddd">${s.pInfo.freq.toFixed(3)}</td><td style="padding:8px;border:1px solid #ddd">${s.delta.toFixed(3)}</td><td style="padding:8px;border:1px solid #ddd">${s.human}</td><td style="padding:8px;border:1px solid #ddd">${s.label}</td></tr>`;
-    });
+  if(videoIssues === 0) {
+    summaryBody.innerHTML = '<tr><td colspan="5" style="color:#27ae60; font-weight:bold; font-size:16px; padding:30px; text-align:center;">✅ Всі відеоканали чисті! Перешкод немає.</td></tr>';
   }
 
   attachCellClickHandlers();
+  saveState(); 
 }
 
-/* -------------------------
-   Кліки по комірках для виділення рядка
-   ------------------------- */
-function clearSummarySelection(){
-  document.querySelectorAll('#summaryBody tr').forEach(r => r.classList.remove('summary-row-selected'));
-}
-function clearCellSelection(){
-  document.querySelectorAll('.freq-input').forEach(inp => inp.parentElement.classList.remove('cell-selected'));
-}
+/* =========================================
+   КЛІК ПО КОМІРЦІ (НАВІГАЦІЯ ТА АВТО-РОЗГОРТАННЯ)
+   ========================================= */
 function attachCellClickHandlers(){
-  document.querySelectorAll('.freq-input').forEach(inp=>{
+  document.querySelectorAll('.freq-input').forEach(inp => {
     const td = inp.parentElement;
     td.onclick = null;
     if(!td.classList.contains('warn') && !td.classList.contains('bad')) return;
 
-    td.onclick = function(e){
-      const already = td.classList.contains('cell-selected');
-      clearCellSelection();
-      clearSummarySelection();
-      if(already) return;
+    td.onclick = function() {
+      document.querySelectorAll('.cell-selected').forEach(el => el.classList.remove('cell-selected'));
+      document.querySelectorAll('.summary-row-selected').forEach(el => el.classList.remove('summary-row-selected'));
 
       td.classList.add('cell-selected');
-      const freq = parseFloat(inp.value);
-      if(!isFinite(freq)) return;
+      const targetFreq = parseFloat(inp.value);
+      if(!isFinite(targetFreq)) return;
 
-      const rows = Array.from(document.querySelectorAll('#summaryBody tr'));
-      let targetRow = null;
-      
-      for(let r of rows){
-        const rFreq = parseFloat(r.dataset.freq);
-        if(Math.abs(rFreq - freq) < 0.001){ targetRow = r; break; }
+      const reportContent = document.getElementById('content_main_report');
+      if(reportContent && reportContent.style.display === 'none') {
+        reportContent.style.display = 'block';
       }
 
-      if(targetRow){
+      const rows = Array.from(document.querySelectorAll('#summaryBody tr'));
+      let targetRow = rows.find(r => Math.abs(parseFloat(r.dataset.freq) - targetFreq) < 0.001);
+      
+      if(targetRow) {
         targetRow.classList.add('summary-row-selected');
         targetRow.scrollIntoView({behavior:'smooth', block:'center'});
       }
@@ -438,35 +553,66 @@ function attachCellClickHandlers(){
   });
 }
 
-// Modal wiring
-const modal = document.getElementById('criticalModalBackdrop');
-document.getElementById('reportHeader').onclick = () => { analyzeAll(); modal.style.display = 'flex'; };
-document.getElementById('criticalModalClose').onclick = () => modal.style.display = 'none';
-window.onclick = (e) => { if(e.target === modal) modal.style.display = 'none'; };
+/* =========================================
+   ІНІЦІАЛІЗАЦІЯ ДАНИХ (ЗАВАНТАЖЕННЯ)
+   ========================================= */
+function loadDefaultTables() {
+  addNewTable("Базова сітка відео 5.8 GHz", [
+    {b:'A', c:[5865,5845,5825,5805,5785,5765,5745,5725]},
+    {b:'B', c:[5733,5752,5771,5790,5999,5828,5847,5866]},
+    {b:'E', c:[5705,5685,5665,5645,5885,5905,5925,5945]},
+    {b:'F', c:[5740,5760,5780,5800,5820,5840,5860,5880]},
+    {b:'R', c:[5658,5695,5732,5769,5806,5843,5880,5917]},
+    {b:'L', c:[5362,5399,5436,5473,5510,5547,5584,5621]},
+    {b:'X', c:[4990,5020,5050,5080,5110,5140,5170,5200]},
+    {b:'Y', c:[4870,4900,4930,4960,5226,5252,5278,5304]}
+  ]);
 
-document.getElementById('saveAndCalcBtn').onclick = analyzeAll;
-
-/* ІНІЦІАЛІЗАЦІЯ ДАНИХ */
-const initial58 = [
-  {b:'A', c:[5865,5845,5825,5805,5785,5765,5745,5725]},
-  {b:'B', c:[5733,5752,5771,5790,5810,5828,5847,5866]},
-  {b:'E', c:[5705,5685,5665,5645,5885,5905,5925,5945]},
-  {b:'F', c:[5740,5760,5780,5800,5820,5840,5860,5880]},
-  {b:'R', c:[5658,5695,5732,5769,5806,5843,5880,5917]},
-  {b:'L', c:[5362,5399,5436,5473,5510,5547,5584,5621]},
-  {b:'X', c:[4990,5020,5050,5080,5110,5140,5170,5200]},
-  {b:'Y', c:[4870,4900,4930,4960,5226,5252,5278,5304]}
-];
-const initial40 = [
-  {b:'A1', c:[3800,3820,3840,3860,3880,3900,3920,3940]},
-  {b:'B1', c:[3960,3980,4000,4020,4040,4060,4080,4100]},
-  {b:'E1', c:[4120,4140,4160,4180,4200,4220,4240,4260]}
-];
+  addNewTable("Сітка відео 4.0 GHz", [
+    {b:'A1', c:[3800,3820,3840,3860,3880,3900,3920,3940]},
+    {b:'B1', c:[3960,3980,4000,4020,4040,4060,4080,4100]},
+    {b:'E1', c:[4120,4140,4160,4180,4200,4220,4240,4260]}
+  ]);
+}
 
 window.onload = () => {
-  addNewTable("Таблиця 1 — 5.8 GHz", initial58);
-  addNewTable("Таблиця 2 — 4.0 GHz", initial40);
-  setTimeout(analyzeAll, 300);
+  const savedData = localStorage.getItem('fpvMasterConstructorData');
+  
+  if (savedData) {
+    try {
+      const state = JSON.parse(savedData);
+      
+      if(state.tolerance) document.getElementById('tolerance').value = state.tolerance;
+      if(state.optHarmonics !== undefined) document.getElementById('optHarmonics').checked = state.optHarmonics;
+      if(state.optSubharmonics !== undefined) document.getElementById('optSubharmonics').checked = state.optSubharmonics;
+      if(state.optIMD !== undefined) document.getElementById('optIMD').checked = state.optIMD;
+      
+      if (state.sources && state.sources.length > 0) {
+        state.sources.forEach(s => addSourceRow(s.id, s.freq));
+      } else {
+        addSourceRow("Пульт керування (TX)", 915);
+        addSourceRow("Відео на землю (VTX)", 1280);
+      }
+
+      if (state.tables && state.tables.length > 0) {
+        state.tables.forEach(t => addNewTable(t.title, t.data));
+      } else {
+        loadDefaultTables();
+      }
+    } catch (e) {
+      console.error("Помилка завантаження збережень:", e);
+      addSourceRow("Пульт керування (TX)", 915);
+      addSourceRow("Відео на землю (VTX)", 1280);
+      loadDefaultTables();
+    }
+  } else {
+    addSourceRow("Пульт керування (TX)", 915);
+    addSourceRow("Відео на землю (VTX)", 1280);
+    loadDefaultTables();
+  }
+  
+  isInitializing = false; 
+  setTimeout(analyzeAll, 100);
 };
 </script>
 </body>
